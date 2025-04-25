@@ -122,6 +122,20 @@ npm run ios
 yarn ios
 ```
 
+#### Running on iOS Simulator
+
+To specifically target the iOS simulator and avoid device provisioning issues, use these commands:
+
+```sh
+# Run in iPhone 16 Pro simulator (with Metro bundler)
+yarn ios:sim
+
+# Run in iPhone 16 Pro simulator (without Metro bundler)
+yarn ios:sim:no-packager
+```
+
+These commands were added to handle common provisioning profile issues when running on simulators. Use `ios:sim` for normal development, and `ios:sim:no-packager` when you already have the Metro bundler running in another terminal.
+
 If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
 This is one way to run your app — you can also build it directly from Android Studio or Xcode.
