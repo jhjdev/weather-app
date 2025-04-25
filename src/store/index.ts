@@ -1,7 +1,6 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
-import { PersistPartial } from 'redux-persist/es/persistReducer';
 import { createLogger } from 'redux-logger';
 
 import themeReducer, { ThemeState } from './slices/themeSlice';

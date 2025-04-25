@@ -16,6 +16,7 @@ export interface LocationError {
 }
 
 // Default location for simulator (New York City)
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const DEFAULT_LOCATION: LocationCoordinates = {
   latitude: 40.7128,
   longitude: -74.006,

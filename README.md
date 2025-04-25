@@ -17,9 +17,7 @@ HostAway is a modern React Native application designed to enhance the travel exp
 
 - Real-time weather information
 - Location-based services
-- Interactive maps and navigation
 - Persistent data storage
-- Offline capability
 - Haptic feedback for enhanced user experience
 - Fast image loading and caching
 - Smooth animations and transitions
