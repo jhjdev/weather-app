@@ -1,6 +1,5 @@
 // Required imports for functionality
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
-import {Platform} from 'react-native';
 import {
   getCurrentWeather,
   getForecast,

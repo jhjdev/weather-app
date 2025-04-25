@@ -1,5 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { REHYDRATE } from 'redux-persist';
+import {createSlice, PayloadAction, Action} from '@reduxjs/toolkit';
+import {REHYDRATE} from 'redux-persist';
+import {PersistPartial} from 'redux-persist/es/persistReducer';
 // Search Result Interface (for location autocomplete)
 export interface SearchResult {
   id: string;
@@ -16,7 +17,7 @@ export interface SearchHistoryItem extends SearchResult {
 }
 
 // Type guard for SearchHistoryItem
-const isValidSearchHistoryItem = (item: any): item is SearchHistoryItem => {
+export const isValidSearchHistoryItem = (item: any): item is SearchHistoryItem => {
   return (
     typeof item === 'object' &&
     item !== null &&
@@ -36,6 +37,14 @@ export interface SearchState {
   isLoading: boolean;
   error: string | null;
   currentSearchTerm: string;
+}
+
+// Type for the redux-persist REHYDRATE action payload
+interface RehydrateAction extends Action<typeof REHYDRATE> {
+  payload?: {
+    search?: SearchState & PersistPartial;
+    [key: string]: any;
+  };
 }
 
 // Initial State
@@ -68,14 +77,16 @@ const searchSlice = createSlice({
       state.searchResults = action.payload;
       state.error = null;
     },
-    clearSearchResults: (state) => {
+    clearSearchResults: state => {
       state.searchResults = [];
     },
 
     // Search history reducers
     addToSearchHistory: (state, action: PayloadAction<SearchResult>) => {
-      if (!action.payload.name || !action.payload.country) return;
-      
+      if (!action.payload.name || !action.payload.country) {
+        return;
+      }
+
       const newItem = {
         id: action.payload.id,
         name: action.payload.name,
@@ -88,34 +99,33 @@ const searchSlice = createSlice({
       // Remove old entry and add new one at the start
       state.searchHistory = [
         newItem,
-        ...state.searchHistory.filter(x => x.id !== newItem.id)
+        ...state.searchHistory.filter(x => x.id !== newItem.id),
       ].slice(0, 10);
     },
-    clearSearchHistory: (state) => {
+    clearSearchHistory: state => {
       state.searchHistory = [];
     },
   },
-  extraReducers: (builder) => {
-    builder.addCase(REHYDRATE, (state, action) => {
+  extraReducers: builder => {
+    builder.addCase(REHYDRATE, (state, action: RehydrateAction) => {
       // Log the rehydrated data
       console.log('Rehydrating search state:', action.payload?.search);
-      
+
       // If we have rehydrated data, validate it
       if (action.payload?.search?.searchHistory) {
-        const validatedHistory = action.payload.search.searchHistory.filter((item: any) => {
-          const isValid = item && 
-            typeof item.id === 'string' &&
-            typeof item.name === 'string' &&
-            typeof item.country === 'string' &&
-            typeof item.lat === 'number' &&
-            typeof item.lon === 'number' &&
-            typeof item.timestamp === 'number';
+        const validatedHistory = action.payload.search.searchHistory.filter(
+          (item: any) => {
+            const isValid = isValidSearchHistoryItem(item);
             
-          if (!isValid) {
-            console.warn('Invalid history item found during rehydration:', item);
-          }
-          return isValid;
-        });
+            if (!isValid) {
+              console.warn(
+                'Invalid history item found during rehydration:',
+                item,
+              );
+            }
+            return isValid;
+          },
+        );
 
         console.log('Validated history after rehydration:', validatedHistory);
         state.searchHistory = validatedHistory;
@@ -134,4 +144,3 @@ export const {
 } = searchSlice.actions;
 
 export default searchSlice.reducer;
-
