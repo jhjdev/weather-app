@@ -87,8 +87,8 @@ export const useWeather = (): UseWeatherReturn => {
           } else {
             console.warn('Weather API response missing location data');
           }
-        } catch (error) {
-          console.error('Error fetching city data from weather API:', error);
+        } catch (cityFetchError) {
+          console.error('Error fetching city data from weather API:', cityFetchError);
           // If there's an error getting the city name, continue with the current location placeholder
         }
 
@@ -97,8 +97,8 @@ export const useWeather = (): UseWeatherReturn => {
           dispatch(fetchCurrentWeather()),
           dispatch(fetchForecast()),
         ]);
-      } catch (error) {
-        const locationError = error as LocationError;
+      } catch (locationFetchError) {
+        const locationError = locationFetchError as LocationError;
         setLocationError(locationError.message);
         console.error('Location error:', locationError.message);
       } finally {
@@ -111,8 +111,8 @@ export const useWeather = (): UseWeatherReturn => {
           dispatch(fetchCurrentWeather()),
           dispatch(fetchForecast()),
         ]);
-      } catch (error) {
-        console.error('Error fetching weather data:', error);
+      } catch (weatherFetchError) {
+        console.error('Error fetching weather data:', weatherFetchError);
       }
     }
   }, [

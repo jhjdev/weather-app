@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, SafeAreaView, StyleSheet, View } from 'react-native';
+import { ScrollView, SafeAreaView, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { useWeather } from '../hooks/useWeather';

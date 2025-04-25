@@ -9,9 +9,6 @@ import ForecastScreen from '../screens/ForecastScreen';
 import SearchScreen from '../screens/SearchScreen';
 import AboutScreen from '../screens/AboutScreen';
 
-// Import our new Header component
-import Header from '../components/common/Header';
-
 // Type definitions for the navigation
 export type RootTabParamList = {
   Home: undefined;

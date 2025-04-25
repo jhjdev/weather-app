@@ -237,11 +237,6 @@ describe('weatherSlice', () => {
     it('should set loading state while pending', () => {
       const store = createTestStore();
 
-      // Create a promise that doesn't resolve immediately to keep the thunk pending
-      const pendingPromise = new Promise<void>(resolve => {
-        setTimeout(() => resolve(), global.mockDelay);
-      });
-
       // Simulate a pending state
       store.dispatch(setLocationAsync({
         latitude: 40.7128,

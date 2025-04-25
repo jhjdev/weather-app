@@ -16,7 +16,6 @@ jest.mock('react-native', () => ({
 import { configureStore, EnhancedStore, Reducer } from '@reduxjs/toolkit';
 import themeReducer, {
   ThemeState,
-  ThemeMode,
   setThemeMode,
   updateSystemTheme,
 } from '../../../src/store/slices/themeSlice';
