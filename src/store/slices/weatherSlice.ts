@@ -95,7 +95,7 @@ export const setLocationAsync = createAsyncThunk<
   try {
     const {latitude, longitude, city, country} = locationData;
 
-    // To toggle simulator location:
+    // To replace the simulator locations with a hard coded location:
     // 1. Command + / to uncomment/comment (Mac)
     // 2. Shift + Command + / to block comment/uncomment (Mac)
     // if (__DEV__ && Platform.OS === 'ios') {
