@@ -1,3 +1,10 @@
+
+# Environment variables
+.env
+.env.development
+.env.production
+.env.test
+
 # OSX
 #
 .DS_Store
@@ -74,3 +81,5 @@ yarn-error.log
 !.yarn/sdks
 !.yarn/versions
 .env
+
+.fake
