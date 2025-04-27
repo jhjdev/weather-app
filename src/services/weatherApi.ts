@@ -1,20 +1,14 @@
-// Import environment variables with type checking
-import {OPENWEATHER_API_KEY, OPENWEATHER_API_URL} from '@env';
+// Import centralized environment configuration
+import { env } from '../config/env';
 
-// Validate API configuration immediately
-if (!OPENWEATHER_API_KEY || !OPENWEATHER_API_URL) {
-  console.error('ERROR: OpenWeather API configuration is missing! Please check your .env file.');
-  throw new Error('OpenWeather API configuration is missing! Please check your .env file.');
-}
-
-// API Configuration is loaded from environment variables
+// API Configuration is loaded from environment configuration
 const WEATHER_ENDPOINT = '/data/2.5/weather';
 const FORECAST_ENDPOINT = '/data/2.5/forecast';
 const GEO_ENDPOINT = '/geo/1.0/direct';
 
 // Default parameters for API requests
 const DEFAULT_PARAMS = {
-  appid: OPENWEATHER_API_KEY,
+  appid: env.weather.apiKey,
   units: 'metric', // Celsius
 };
 // API key is validated at module initialization
@@ -176,13 +170,26 @@ export interface LocationSearchResult {
 
 // Utility function to build API URLs
 const buildUrl = (endpoint: string, params: Record<string, any>): string => {
+  // Debug log for the API key that's being loaded
+  console.log('Weather API Configuration:', {
+    apiKey: env.weather.apiKey,
+    apiUrl: env.weather.apiUrl,
+  });
+  
   // Ensure endpoint starts with /
   if (!endpoint.startsWith('/')) {
     endpoint = `/${endpoint}`;
   }
 
+  // Add debug log for the params
+  console.log('Building URL with params:', {
+    endpoint,
+    params,
+    allParams: { ...DEFAULT_PARAMS, ...params }
+  });
+
   // Create URL with base and endpoint
-  const url = new URL(endpoint, OPENWEATHER_API_URL);
+  const url = new URL(endpoint, env.weather.apiUrl);
 
   // Add all parameters
   const allParams = { ...DEFAULT_PARAMS, ...params };
