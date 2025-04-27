@@ -11,16 +11,50 @@
 
 ## Project Overview
 
-HostAway is a modern React Native application designed to enhance the travel experience by providing real-time weather information and local insights. Built by Johnefill Jakobsson, this app helps travelers make informed decisions about their destinations by combining weather data from OpenWeather API with an intuitive user interface.
+This is a weather forecast application built with React Native as part of a technical test for HostAway. Developed by Jon Hnefill Jakobsson, this app provides current weather conditions and forecasts using the OpenWeatherMap API.
 
-### Key Features
+### Technical Test Requirements Checklist
 
-- Real-time weather information
-- Location-based services
-- Persistent data storage
-- Haptic feedback for enhanced user experience
-- Fast image loading and caching
-- Smooth animations and transitions
+#### Core Technologies
+
+- ✅ React Native with TypeScript
+- ✅ OpenWeatherMap API integration
+- ✅ Redux for state management
+- ✅ React Navigation
+- ✅ Responsive design
+
+#### Core Features
+
+1. Location Search
+
+   - ✅ City/location input
+   - ✅ Autocomplete suggestions (bonus)
+   - ✅ Save recent searches (bonus)
+
+2. Current Weather Display
+
+   - ✅ Temperature
+   - ✅ Condition icons
+   - ✅ Humidity
+   - ✅ Wind speed
+   - ✅ Feels like temperature
+
+3. 5-Day Forecast
+
+   - ✅ Daily forecast cards
+   - ✅ Min/max temperatures
+   - ✅ Weather conditions
+
+4. Geolocation Support (bonus)
+   - ✅ Automatic location detection
+   - ✅ Manual location override
+
+#### Bonus Features
+
+- ✅ Unit tests
+- ✅ Performance optimizations
+- ✅ Error handling
+- ✅ Clean architecture
 
 ### Development Challenges & Learnings
 
@@ -33,6 +67,7 @@ Throughout the development process, we encountered and overcame several challeng
 - **Cross-Platform Consistency**: Addressing platform-specific UI and behavior differences to provide a consistent experience.
 
 These challenges provided valuable learning opportunities in:
+
 - Advanced React Native patterns
 - Complex state management with Redux
 - Geolocation implementation best practices
@@ -42,12 +77,14 @@ These challenges provided valuable learning opportunities in:
 ## Tech Stack
 
 ### Core Technologies
+
 - **React Native** (v0.79.1) - Core framework for building the mobile application
 - **TypeScript** (v5.0.4) - For type-safe development
 - **Redux** (@reduxjs/toolkit) - State management with Redux Toolkit
 - **React Navigation** (v7) - Navigation management
 
 ### Key Libraries
+
 - `react-native-geolocation-service` - Precise location services
 - `react-native-fast-image` - Optimized image loading and caching
 - `lottie-react-native` - High-quality animations
@@ -58,6 +95,7 @@ These challenges provided valuable learning opportunities in:
 - `@react-native-async-storage/async-storage` - Local data storage
 
 ### Development Tools
+
 - `jest` & `@testing-library/react-native` - Testing framework
 - `eslint` & `prettier` - Code quality and formatting
 - `react-native-dotenv` - Environment variable management
@@ -75,9 +113,6 @@ To start the Metro dev server, run the following command from the root of your R
 ```sh
 # Using npm
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
 ## Step 2: Build and run your app
@@ -89,9 +124,6 @@ With Metro running, open a new terminal window/pane from the root of your React 
 ```sh
 # Using npm
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
 ### iOS
@@ -115,9 +147,6 @@ For more information, please visit [CocoaPods Getting Started guide](https://gui
 ```sh
 # Using npm
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
 #### Running on iOS Simulator
@@ -126,10 +155,10 @@ To specifically target the iOS simulator and avoid device provisioning issues, u
 
 ```sh
 # Run in iPhone 16 Pro simulator (with Metro bundler)
-yarn ios:sim
+npm run ios:sim
 
 # Run in iPhone 16 Pro simulator (without Metro bundler)
-yarn ios:sim:no-packager
+npm run ios:sim:no-packager
 ```
 
 These commands were added to handle common provisioning profile issues when running on simulators. Use `ios:sim` for normal development, and `ios:sim:no-packager` when you already have the Metro bundler running in another terminal.
@@ -153,25 +182,55 @@ When you want to forcefully reload, for example to reset the state of your app, 
 
 ### Environment Variables
 
-HostAway requires an OpenWeather API key to fetch weather data. Set up your environment variables:
+HostAway requires specific environment variables to function properly. The app uses different environment configurations based on build type:
 
-1. Copy the example environment file:
+#### Environment Files
+
+- `.env` - Base environment file for local development
+- `.env.development` - Used for development builds
+- `.env.production` - Used for production builds
+- `.env.test` - Used when running tests
+
+All environment files should contain the same variables with appropriate values for each environment.
+
+#### Required Environment Variables
+
+| Variable              | Description                         | Example                          |
+| --------------------- | ----------------------------------- | -------------------------------- |
+| `OPENWEATHER_API_KEY` | API key for the OpenWeather service | `a1b2c3d4e5f6g7h8i9j0`           |
+| `OPENWEATHER_API_URL` | Base URL for OpenWeather API        | `https://api.openweathermap.org` |
+
+#### Setting Up Environment Files
+
+1. Copy the example environment file to create your base configuration:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Edit the `.env` file with your API credentials:
+
    ```
    OPENWEATHER_API_KEY=your_api_key_here
-   OPENWEATHER_API_URL=https://api.openweathermap.org/data/2.5
+   OPENWEATHER_API_URL=https://api.openweathermap.org
    ```
+
+3. For different build environments, create copies with appropriate configurations:
+
+   ```bash
+   cp .env .env.development
+   cp .env .env.production
+   cp .env .env.test
+   ```
+
+4. Modify each file as needed for its specific environment.
 
 ### Getting an OpenWeather API Key
 
 1. Sign up at [OpenWeather](https://openweathermap.org/api)
 2. Navigate to your account page and find the "API keys" tab
 3. Generate a new API key (or use the default one provided)
-4. Copy the key and paste it in your `.env` file
+4. Copy the key and paste it in your environment files
 5. Note that new API keys may take a few hours to activate
 
 ## Project Structure
@@ -207,23 +266,24 @@ HostAway uses Jest and React Native Testing Library for testing components, scre
 
 ```bash
 # Run all tests
-yarn test
+npm test
 
 # Run tests in watch mode
-yarn test --watch
+npm test -- --watch
 
 # Run tests with coverage
-yarn test --coverage
+npm test -- --coverage
 
 # Run specific test file
-yarn test path/to/test-file.test.ts
+npm test -- path/to/test-file.test.ts
 ```
 
 ### Test Examples
 
 #### Component Testing
+
 ```typescript
-import { render, fireEvent } from '@testing-library/react-native';
+import {render, fireEvent} from '@testing-library/react-native';
 import WeatherCard from '../src/components/WeatherCard';
 
 describe('WeatherCard', () => {
@@ -231,11 +291,11 @@ describe('WeatherCard', () => {
     const props = {
       temperature: 20,
       condition: 'Sunny',
-      location: 'Stockholm'
+      location: 'Stockholm',
     };
 
-    const { getByText } = render(<WeatherCard {...props} />);
-    
+    const {getByText} = render(<WeatherCard {...props} />);
+
     expect(getByText('20°')).toBeTruthy();
     expect(getByText('Sunny')).toBeTruthy();
     expect(getByText('Stockholm')).toBeTruthy();
@@ -244,16 +304,17 @@ describe('WeatherCard', () => {
 ```
 
 #### Redux Testing
+
 ```typescript
-import weatherReducer, { setWeather } from '../src/store/slices/weatherSlice';
+import weatherReducer, {setWeather} from '../src/store/slices/weatherSlice';
 
 describe('Weather Slice', () => {
   it('should handle initial state', () => {
-    expect(weatherReducer(undefined, { type: 'unknown' })).toEqual({
+    expect(weatherReducer(undefined, {type: 'unknown'})).toEqual({
       current: null,
       forecast: [],
       loading: false,
-      error: null
+      error: null,
     });
   });
 });
@@ -286,14 +347,16 @@ If weather data isn't loading:
 If state isn't persisting:
 
 1. Clear AsyncStorage:
+
 ```javascript
 import AsyncStorage from '@react-native-async-storage/async-storage';
 await AsyncStorage.clear();
 ```
 
 2. Reset the Redux store:
+
 ```javascript
-dispatch({ type: 'RESET_STORE' });
+dispatch({type: 'RESET_STORE'});
 ```
 
 #### Performance Issues
@@ -310,6 +373,7 @@ If experiencing slow performance:
 For native build issues:
 
 1. Clean build folders:
+
 ```bash
 # iOS
 cd ios && xcodebuild clean
@@ -321,8 +385,15 @@ cd android && ./gradlew clean
 ```
 
 2. Reset Metro cache:
+
 ```bash
-yarn start --reset-cache
+npm start -- --reset-cache
+```
+
+3. Clear npm cache if needed:
+
+```bash
+npm cache clean --force
 ```
 
 ## Congratulations! :tada:
