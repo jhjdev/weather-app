@@ -74,7 +74,7 @@ export const requestLocationPermission = async (): Promise<boolean> => {
  * Get current location
  */
 export const getCurrentLocation = async (): Promise<LocationCoordinates> => {
-  // To toggle simulator location:
+  // To replace the simulator locations with a hard coded location:
   // Use Command + / to uncomment/comment a single line (Mac)
   // Use Shift + Command + / to comment/uncomment a block (Mac)
   // if (__DEV__ && Platform.OS === 'ios') {
