@@ -6,7 +6,7 @@
  * for native modules, third-party libraries, and React Native components.
  */
 
-const { jest } = require('@jest/globals');
+const {jest} = require('@jest/globals');
 const fs = require('fs');
 const path = require('path');
 
@@ -21,7 +21,7 @@ global.mockDelay = 10;
 // Create necessary mock files directory if it doesn't exist
 const mockDir = path.join(__dirname, '__mocks__');
 if (!fs.existsSync(mockDir)) {
-  fs.mkdirSync(mockDir, { recursive: true });
+  fs.mkdirSync(mockDir, {recursive: true});
 }
 
 // Create fileMock.js if it doesn't exist
@@ -56,18 +56,20 @@ jest.mock('react-native', () => {
     isTVOS: false,
     isTV: false,
     constants: {
-      reactNativeVersion: { major: 0, minor: 71, patch: 0 },
+      reactNativeVersion: {major: 0, minor: 71, patch: 0},
     },
     select: jest.fn(obj => obj.ios || obj.default),
   };
 
   // Mock the Dimensions API
-  const dimensions = { width: 375, height: 812, scale: 3, fontScale: 1 };
+  const dimensions = {width: 375, height: 812, scale: 3, fontScale: 1};
   RN.Dimensions = {
     ...RN.Dimensions,
-    get: jest.fn(screen => screen === 'window' || screen === 'screen' ? dimensions : null),
+    get: jest.fn(screen =>
+      screen === 'window' || screen === 'screen' ? dimensions : null,
+    ),
     set: jest.fn(),
-    addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    addEventListener: jest.fn(() => ({remove: jest.fn()})),
     removeEventListener: jest.fn(),
   };
 
@@ -76,7 +78,7 @@ jest.mock('react-native', () => {
   RN.Appearance = {
     ...RN.Appearance,
     getColorScheme: jest.fn(() => colorScheme),
-    addChangeListener: jest.fn(cb => ({ remove: jest.fn() })),
+    addChangeListener: jest.fn(cb => ({remove: jest.fn()})),
     removeChangeListener: jest.fn(),
     setColorScheme: mockScheme => {
       colorScheme = mockScheme;
@@ -88,17 +90,17 @@ jest.mock('react-native', () => {
   RN.Animated = {
     ...RN.Animated,
     timing: jest.fn(() => ({
-      start: jest.fn(cb => cb && cb({ finished: true })),
+      start: jest.fn(cb => cb && cb({finished: true})),
       stop: jest.fn(),
       reset: jest.fn(),
     })),
     spring: jest.fn(() => ({
-      start: jest.fn(cb => cb && cb({ finished: true })),
+      start: jest.fn(cb => cb && cb({finished: true})),
       stop: jest.fn(),
       reset: jest.fn(),
     })),
     decay: jest.fn(() => ({
-      start: jest.fn(cb => cb && cb({ finished: true })),
+      start: jest.fn(cb => cb && cb({finished: true})),
       stop: jest.fn(),
     })),
     Value: jest.fn(value => ({
@@ -108,7 +110,7 @@ jest.mock('react-native', () => {
         __getValue: jest.fn(() => value),
       })),
       __getValue: jest.fn(() => value),
-      addListener: jest.fn(() => ({ remove: jest.fn() })),
+      addListener: jest.fn(() => ({remove: jest.fn()})),
       removeListener: jest.fn(),
       removeAllListeners: jest.fn(),
       stopAnimation: jest.fn(callback => callback && callback(value)),
@@ -119,24 +121,24 @@ jest.mock('react-native', () => {
       setValue: jest.fn(),
       setOffset: jest.fn(),
       flattenOffset: jest.fn(),
-      addListener: jest.fn(() => ({ remove: jest.fn() })),
+      addListener: jest.fn(() => ({remove: jest.fn()})),
       removeListener: jest.fn(),
       removeAllListeners: jest.fn(),
-      stopAnimation: jest.fn(callback => callback && callback({ x: 0, y: 0 })),
-      getLayout: jest.fn(() => ({ left: 0, top: 0 })),
+      stopAnimation: jest.fn(callback => callback && callback({x: 0, y: 0})),
+      getLayout: jest.fn(() => ({left: 0, top: 0})),
     })),
     loop: jest.fn(animation => animation),
     sequence: jest.fn(animations => ({
-      start: jest.fn(cb => cb && cb({ finished: true })),
+      start: jest.fn(cb => cb && cb({finished: true})),
     })),
     parallel: jest.fn(animations => ({
-      start: jest.fn(cb => cb && cb({ finished: true })),
+      start: jest.fn(cb => cb && cb({finished: true})),
     })),
     stagger: jest.fn((delay, animations) => ({
-      start: jest.fn(cb => cb && cb({ finished: true })),
+      start: jest.fn(cb => cb && cb({finished: true})),
     })),
     delay: jest.fn(delayMS => ({
-      start: jest.fn(cb => cb && cb({ finished: true })),
+      start: jest.fn(cb => cb && cb({finished: true})),
     })),
     createAnimatedComponent: jest.fn(component => component),
     event: jest.fn(() => jest.fn()),
@@ -147,7 +149,7 @@ jest.mock('react-native', () => {
   RN.Keyboard = {
     ...RN.Keyboard,
     dismiss: jest.fn(),
-    addListener: jest.fn(() => ({ remove: jest.fn() })),
+    addListener: jest.fn(() => ({remove: jest.fn()})),
     removeListener: jest.fn(),
     removeAllListeners: jest.fn(),
     scheduleLayoutAnimation: jest.fn(),
@@ -166,7 +168,7 @@ jest.mock('react-native', () => {
     openURL: jest.fn(() => Promise.resolve()),
     canOpenURL: jest.fn(() => Promise.resolve(true)),
     getInitialURL: jest.fn(() => Promise.resolve(null)),
-    addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+    addEventListener: jest.fn(() => ({remove: jest.fn()})),
     removeEventListener: jest.fn(),
   };
 
@@ -175,7 +177,11 @@ jest.mock('react-native', () => {
     ...RN.Image,
     getSize: jest.fn((uri, success, failure) => success(100, 100)),
     prefetch: jest.fn(() => Promise.resolve()),
-    resolveAssetSource: jest.fn(source => ({ uri: source, width: 100, height: 100 })),
+    resolveAssetSource: jest.fn(source => ({
+      uri: source,
+      width: 100,
+      height: 100,
+    })),
   };
 
   // Mock other commonly used components
@@ -272,7 +278,7 @@ jest.mock('react-native-geolocation-service', () => {
 
     watchPosition: jest.fn((success, error, options) => {
       const watchId = (++watchIds).toString();
-      watchCallbacks[watchId] = { success, error };
+      watchCallbacks[watchId] = {success, error};
 
       // Immediately return a location unless there's an error
       setTimeout(() => getResponse(success, error), 0);
@@ -302,7 +308,7 @@ jest.mock('react-native-geolocation-service', () => {
       mockErrorResponse = null;
 
       // Notify all active watchers
-      Object.values(watchCallbacks).forEach(({ success }) => {
+      Object.values(watchCallbacks).forEach(({success}) => {
         success && success(mockLocationResponse);
       });
     },
@@ -314,7 +320,7 @@ jest.mock('react-native-geolocation-service', () => {
       };
 
       // Notify all active watchers
-      Object.values(watchCallbacks).forEach(({ error: errorCb }) => {
+      Object.values(watchCallbacks).forEach(({error: errorCb}) => {
         errorCb && errorCb(mockErrorResponse);
       });
     },
@@ -403,7 +409,7 @@ jest.mock('react-native-device-info', () => {
   };
 
   // Current mock values (can be updated in tests)
-  let mockValues = { ...defaultMockValues };
+  let mockValues = {...defaultMockValues};
 
   // Create a helper for generating mock methods
   const createMockMethod = (key, defaultValue, isAsync = false) => {
@@ -438,52 +444,96 @@ jest.mock('react-native-device-info', () => {
     getBuildId: createMockMethod('buildId', '1A2B3C', true),
     getCarrier: createMockMethod('carrier', 'T-Mobile', true),
     getDeviceName: createMockMethod('deviceName', 'iPhone', true),
-    getFirstInstallTime: createMockMethod('firstInstallTime', 1625097600000, true),
+    getFirstInstallTime: createMockMethod(
+      'firstInstallTime',
+      1625097600000,
+      true,
+    ),
     getFreeDiskStorage: createMockMethod('freeDiskStorage', 20000000000, true),
     getHardware: createMockMethod('hardware', 'iPhone', true),
     getHost: createMockMethod('host', 'host', true),
     getIpAddress: createMockMethod('ipAddress', '192.168.1.1', true),
-    getInstallReferrer: createMockMethod('installReferrer', 'utm_source=google', true),
+    getInstallReferrer: createMockMethod(
+      'installReferrer',
+      'utm_source=google',
+      true,
+    ),
     getInstanceId: createMockMethod('instanceId', '123456789abcdef', true),
     getLastUpdateTime: createMockMethod('lastUpdateTime', 1625097600000, true),
     getMacAddress: createMockMethod('macAddress', '02:00:00:00:00:00', true),
     getManufacturer: createMockMethod('manufacturer', 'Apple', true),
     getMaxMemory: createMockMethod('maxMemory', 6000000000, true),
     getPhoneNumber: createMockMethod('phoneNumber', '', true),
-    getPowerState: createMockMethod('powerState', { batteryLevel: 0.8, batteryState: 'charging', lowPowerMode: false }, true),
+    getPowerState: createMockMethod(
+      'powerState',
+      {batteryLevel: 0.8, batteryState: 'charging', lowPowerMode: false},
+      true,
+    ),
     getProduct: createMockMethod('product', 'iPhone12,1', true),
     getSerialNumber: createMockMethod('serialNumber', 'ABCDEF123456', true),
-    getSupportedAbis: createMockMethod('supportedAbis', ['armeabi-v7a', 'arm64-v8a'], true),
-    getSupported32BitAbis: createMockMethod('supported32BitAbis', ['armeabi-v7a'], true),
-    getSupported64BitAbis: createMockMethod('supported64BitAbis', ['arm64-v8a'], true),
-    getTotalDiskCapacity: createMockMethod('totalDiskCapacity', 64000000000, true),
+    getSupportedAbis: createMockMethod(
+      'supportedAbis',
+      ['armeabi-v7a', 'arm64-v8a'],
+      true,
+    ),
+    getSupported32BitAbis: createMockMethod(
+      'supported32BitAbis',
+      ['armeabi-v7a'],
+      true,
+    ),
+    getSupported64BitAbis: createMockMethod(
+      'supported64BitAbis',
+      ['arm64-v8a'],
+      true,
+    ),
+    getTotalDiskCapacity: createMockMethod(
+      'totalDiskCapacity',
+      64000000000,
+      true,
+    ),
     getTotalMemory: createMockMethod('totalMemory', 8000000000, true),
-    getUniqueId: createMockMethod('uniqueId', 'ABCDEF01-2345-6789-ABCD-EF0123456789', true),
+    getUniqueId: createMockMethod(
+      'uniqueId',
+      'ABCDEF01-2345-6789-ABCD-EF0123456789',
+      true,
+    ),
     getUsedMemory: createMockMethod('usedMemory', 2000000000, true),
-    getUserAgent: createMockMethod('userAgent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_5 like Mac OS X)', true),
+    getUserAgent: createMockMethod(
+      'userAgent',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 14_5 like Mac OS X)',
+      true,
+    ),
     isAirplaneMode: createMockMethod('isAirplaneMode', false, true),
     isBatteryCharging: createMockMethod('isBatteryCharging', true, true),
     isCameraPresent: createMockMethod('isCameraPresent', true, true),
-    isHeadphonesConnected: createMockMethod('isHeadphonesConnected', false, true),
+    isHeadphonesConnected: createMockMethod(
+      'isHeadphonesConnected',
+      false,
+      true,
+    ),
     isLocationEnabled: createMockMethod('isLocationEnabled', true, true),
-    isPinOrFingerprintSet: createMockMethod('isPinOrFingerprintSet', true, true),
+    isPinOrFingerprintSet: createMockMethod(
+      'isPinOrFingerprintSet',
+      true,
+      true,
+    ),
     hasGms: createMockMethod('hasGms', true, true),
     hasHms: createMockMethod('hasHms', false, true),
 
     // Event listeners
     addBatteryLevelListener: jest.fn(listener => {
-      return { remove: jest.fn() };
+      return {remove: jest.fn()};
     }),
     addPowerStateListener: jest.fn(listener => {
-      return { remove: jest.fn() };
+      return {remove: jest.fn()};
     }),
 
     // Test helpers
     __setMockValues: values => {
-      mockValues = { ...mockValues, ...values };
+      mockValues = {...mockValues, ...values};
     },
     __resetMockValues: () => {
-      mockValues = { ...defaultMockValues };
+      mockValues = {...defaultMockValues};
     },
   };
 
@@ -555,7 +605,7 @@ jest.mock('@react-native-community/netinfo', () => {
   };
 
   // Current connection state that can be updated in tests
-  let connectionInfo = { ...defaultConnectionInfo };
+  let connectionInfo = {...defaultConnectionInfo};
   // All active event listeners
   const listeners = new Set();
 
@@ -591,19 +641,19 @@ jest.mock('@react-native-community/netinfo', () => {
     CellularGeneration,
 
     // Test helper methods
-    __setConnectionInfo: (info) => {
-      connectionInfo = { ...connectionInfo, ...info };
+    __setConnectionInfo: info => {
+      connectionInfo = {...connectionInfo, ...info};
 
       // If details are provided, merge them with existing details
       if (info.details) {
-        connectionInfo.details = { ...connectionInfo.details, ...info.details };
+        connectionInfo.details = {...connectionInfo.details, ...info.details};
       }
 
       notifyListeners();
     },
 
     __resetConnectionInfo: () => {
-      connectionInfo = { ...defaultConnectionInfo };
+      connectionInfo = {...defaultConnectionInfo};
       notifyListeners();
     },
   };
@@ -636,7 +686,7 @@ jest.mock('@react-native-async-storage/async-storage', () => {
   let mockError = null;
 
   // Helper for handling errors
-  const handleOperation = async (operation) => {
+  const handleOperation = async operation => {
     if (mockError) {
       throw new Error(mockError);
     }
@@ -650,81 +700,81 @@ jest.mock('@react-native-async-storage/async-storage', () => {
       handleOperation(() => {
         storage[key] = value;
         return Promise.resolve();
-      })
+      }),
     ),
 
-    getItem: jest.fn((key) =>
+    getItem: jest.fn(key =>
       handleOperation(() => {
         return Promise.resolve(storage[key] ?? null);
-      })
+      }),
     ),
 
-    removeItem: jest.fn((key) =>
+    removeItem: jest.fn(key =>
       handleOperation(() => {
         delete storage[key];
         return Promise.resolve();
-      })
+      }),
     ),
 
     clear: jest.fn(() =>
       handleOperation(() => {
         storage = {};
         return Promise.resolve();
-      })
+      }),
     ),
 
     getAllKeys: jest.fn(() =>
       handleOperation(() => {
         return Promise.resolve(Object.keys(storage));
-      })
+      }),
     ),
 
-    multiGet: jest.fn((keys) =>
+    multiGet: jest.fn(keys =>
       handleOperation(() => {
         const values = keys.map(key => [key, storage[key] ?? null]);
         return Promise.resolve(values);
-      })
+      }),
     ),
 
-    multiSet: jest.fn((keyValuePairs) =>
+    multiSet: jest.fn(keyValuePairs =>
       handleOperation(() => {
         keyValuePairs.forEach(([key, value]) => {
           storage[key] = value;
         });
         return Promise.resolve();
-      })
+      }),
     ),
 
-    multiRemove: jest.fn((keys) =>
+    multiRemove: jest.fn(keys =>
       handleOperation(() => {
         keys.forEach(key => {
           delete storage[key];
         });
         return Promise.resolve();
-      })
+      }),
     ),
 
-    multiMerge: jest.fn((keyValuePairs) =>
+    multiMerge: jest.fn(keyValuePairs =>
       handleOperation(() => {
         keyValuePairs.forEach(([key, value]) => {
           try {
             const existingValue = storage[key] ? JSON.parse(storage[key]) : {};
             const newValue = JSON.parse(value);
-            storage[key] = JSON.stringify({ ...existingValue, ...newValue });
+            storage[key] = JSON.stringify({...existingValue, ...newValue});
           } catch (e) {
             // If not JSON, just replace
             storage[key] = value;
           }
         });
         return Promise.resolve();
-      })
+      }),
     ),
 
     // Test helper methods
-    __getStorage: () => ({ ...storage }),
+    __getStorage: () => ({...storage}),
 
-    __setItems: (items) => {
-      storage = { ...storage, ...items };
+    __setItems: items => {
+      storage = {...storage, ...items};
     },
 
     __clear: () => {
@@ -732,7 +782,7 @@ jest.mock('@react-native-async-storage/async-storage', () => {
       mockError = null;
     },
 
-    __setError: (error) => {
+    __setError: error => {
       mockError = error;
     },
 
@@ -740,7 +790,10 @@ jest.mock('@react-native-async-storage/async-storage', () => {
       storage = {};
       mockError = null;
       Object.keys(asyncStorageMock).forEach(key => {
-        if (typeof asyncStorageMock[key] === 'function' && asyncStorageMock[key].mockClear) {
+        if (
+          typeof asyncStorageMock[key] === 'function' &&
+          asyncStorageMock[key].mockClear
+        ) {
           asyncStorageMock[key].mockClear();
         }
       });
@@ -785,12 +838,12 @@ jest.mock('react-native-safe-area-context', () => {
   };
 
   // Current values that can be updated in tests
-  let insets = { ...defaultInsets };
-  let frame = { ...defaultFrame };
+  let insets = {...defaultInsets};
+  let frame = {...defaultFrame};
 
   // Create mock components and hooks
-  const SafeAreaProvider = ({ children }) => children;
-  const SafeAreaConsumer = ({ children }) => children(insets);
+  const SafeAreaProvider = ({children}) => children;
+  const SafeAreaConsumer = ({children}) => children(insets);
 
   const useSafeAreaInsets = jest.fn(() => insets);
   const useSafeAreaFrame = jest.fn(() => frame);
@@ -799,28 +852,28 @@ jest.mock('react-native-safe-area-context', () => {
   const safeAreaMock = {
     SafeAreaProvider,
     SafeAreaConsumer,
-    SafeAreaView: ({ children }) => children,
+    SafeAreaView: ({children}) => children,
     useSafeAreaInsets,
     useSafeAreaFrame,
 
     // Test helper methods
-    __setInsets: (newInsets) => {
-      insets = { ...insets, ...newInsets };
+    __setInsets: newInsets => {
+      insets = {...insets, ...newInsets};
     },
 
-    __setFrame: (newFrame) => {
-      frame = { ...frame, ...newFrame };
+    __setFrame: newFrame => {
+      frame = {...frame, ...newFrame};
     },
 
     __resetMock: () => {
-      insets = { ...defaultInsets };
-      frame = { ...defaultFrame };
+      insets = {...defaultInsets};
+      frame = {...defaultFrame};
     },
 
     // The initial values
     initialMetrics: {
-      insets: { ...defaultInsets },
-      frame: { ...defaultFrame },
+      insets: {...defaultInsets},
+      frame: {...defaultFrame},
     },
   };
 
@@ -842,7 +895,7 @@ jest.mock('react-native-haptic-feedback', () => {
   // Mock implementation
   const hapticMock = {
     trigger: jest.fn((type, options) => {
-      triggeredHaptics.push({ type, options, timestamp: Date.now() });
+      triggeredHaptics.push({type, options, timestamp: Date.now()});
     }),
 
     // Constants
@@ -874,43 +927,48 @@ jest.mock('react-native-haptic-feedback', () => {
 
 /**
  * Mock implementation for react-native-fast-image
- * Simulates the FastImage component behavior
+ * Simulates the FastImage component behavior (if installed)
  */
-jest.mock('react-native-fast-image', () => {
-  const React = require('react');
+try {
+  require.resolve('react-native-fast-image');
+  jest.mock('react-native-fast-image', () => {
+    const React = require('react');
 
-  // Create mock component
-  const FastImageComponent = props => {
-    return React.createElement('FastImage', props);
-  };
+    // Create mock component
+    const FastImageComponent = props => {
+      return React.createElement('FastImage', props);
+    };
 
-  // Add static properties and methods
-  FastImageComponent.resizeMode = {
-    CONTAIN: 'contain',
-    COVER: 'cover',
-    STRETCH: 'stretch',
-    CENTER: 'center',
-  };
+    // Add static properties and methods
+    FastImageComponent.resizeMode = {
+      CONTAIN: 'contain',
+      COVER: 'cover',
+      STRETCH: 'stretch',
+      CENTER: 'center',
+    };
 
-  FastImageComponent.priority = {
-    LOW: 'low',
-    NORMAL: 'normal',
-    HIGH: 'high',
-  };
+    FastImageComponent.priority = {
+      LOW: 'low',
+      NORMAL: 'normal',
+      HIGH: 'high',
+    };
 
-  FastImageComponent.cacheControl = {
-    IMMUTABLE: 'immutable',
-    WEB: 'web',
-    CACHE_ONLY: 'cacheOnly',
-  };
+    FastImageComponent.cacheControl = {
+      IMMUTABLE: 'immutable',
+      WEB: 'web',
+      CACHE_ONLY: 'cacheOnly',
+    };
 
-  // Add methods for preloading and clearing cache
-  FastImageComponent.preload = jest.fn(sources => Promise.resolve());
-  FastImageComponent.clearMemoryCache = jest.fn(() => Promise.resolve());
-  FastImageComponent.clearDiskCache = jest.fn(() => Promise.resolve());
+    // Add methods for preloading and clearing cache
+    FastImageComponent.preload = jest.fn(sources => Promise.resolve());
+    FastImageComponent.clearMemoryCache = jest.fn(() => Promise.resolve());
+    FastImageComponent.clearDiskCache = jest.fn(() => Promise.resolve());
 
-  return FastImageComponent;
-});
+    return FastImageComponent;
+  });
+} catch (e) {
+  // react-native-fast-image not installed, skip mock
+}
 
 /**
  * Mock implementation for lottie-react-native
@@ -958,16 +1016,16 @@ jest.mock('lottie-react-native', () => {
  */
 jest.mock('react-native-image-picker', () => {
   // Default mock response - cancelled
-  const defaultResponse = { didCancel: true };
+  const defaultResponse = {didCancel: true};
 
   // Current response to return
-  let mockResponse = { ...defaultResponse };
+  let mockResponse = {...defaultResponse};
 
   // Mock implementation
   const imagePickerMock = {
     // Core API methods
-    launchCamera: jest.fn((options) => Promise.resolve(mockResponse)),
-    launchImageLibrary: jest.fn((options) => Promise.resolve(mockResponse)),
+    launchCamera: jest.fn(options => Promise.resolve(mockResponse)),
+    launchImageLibrary: jest.fn(options => Promise.resolve(mockResponse)),
 
     // Legacy callback API for backward compatibility
     showImagePicker: jest.fn((options, callback) => {
@@ -975,12 +1033,12 @@ jest.mock('react-native-image-picker', () => {
     }),
 
     // Test helper methods
-    __setMockResponse: (response) => {
-      mockResponse = { ...response };
+    __setMockResponse: response => {
+      mockResponse = {...response};
     },
 
     __resetMockResponse: () => {
-      mockResponse = { ...defaultResponse };
+      mockResponse = {...defaultResponse};
     },
 
     // Constants
@@ -1021,21 +1079,21 @@ jest.mock('react-native-reanimated', () => {
     // Reanimated specific API
     useSharedValue: jest.fn(initialValue => ({
       value: initialValue,
-      addListener: jest.fn(() => ({ remove: jest.fn() })),
+      addListener: jest.fn(() => ({remove: jest.fn()})),
     })),
 
-    useDerivedValue: jest.fn((derivation) => {
+    useDerivedValue: jest.fn(derivation => {
       const val = derivation();
       return {
         value: val,
-        addListener: jest.fn(() => ({ remove: jest.fn() })),
+        addListener: jest.fn(() => ({remove: jest.fn()})),
       };
     }),
 
     useAnimatedStyle: jest.fn(() => ({})),
     useAnimatedGestureHandler: jest.fn(() => ({})),
     useAnimatedScrollHandler: jest.fn(() => ({})),
-    useAnimatedRef: jest.fn(() => ({ current: null })),
+    useAnimatedRef: jest.fn(() => ({current: null})),
 
     withTiming: jest.fn((toValue, config, callback) => {
       callback && callback(true);
@@ -1064,11 +1122,11 @@ jest.mock('react-native-reanimated', () => {
 
     // Entry/exit animations
     FadeIn: {
-      duration: jest.fn(() => ({ springify: jest.fn() })),
+      duration: jest.fn(() => ({springify: jest.fn()})),
       springify: jest.fn(),
     },
     FadeOut: {
-      duration: jest.fn(() => ({ springify: jest.fn() })),
+      duration: jest.fn(() => ({springify: jest.fn()})),
       springify: jest.fn(),
     },
     SlideInRight: jest.fn(),
@@ -1101,8 +1159,8 @@ jest.mock('react-native-gesture-handler', () => {
 
   // Create simple component factory
   const createMockComponent = (name, extraProps = {}) => {
-    const component = (props) => React.createElement(name, props);
-    return Object.assign(component, { displayName: name, ...extraProps });
+    const component = props => React.createElement(name, props);
+    return Object.assign(component, {displayName: name, ...extraProps});
   };
 
   // Mock the gesture handlers
@@ -1198,7 +1256,7 @@ jest.mock('react-native-vector-icons/Ionicons', () => {
 
   // Add methods used for button creation
   IconComponent.getImageSource = jest.fn((name, size, color) =>
-    Promise.resolve({ uri: `icon-${name}` })
+    Promise.resolve({uri: `icon-${name}`}),
   );
 
   return IconComponent;
@@ -1206,22 +1264,22 @@ jest.mock('react-native-vector-icons/Ionicons', () => {
 
 // Mock all icon fonts similarly
 jest.mock('react-native-vector-icons/MaterialIcons', () =>
-  require('react-native-vector-icons/Ionicons')
+  require('react-native-vector-icons/Ionicons'),
 );
 jest.mock('react-native-vector-icons/FontAwesome', () =>
-  require('react-native-vector-icons/Ionicons')
+  require('react-native-vector-icons/Ionicons'),
 );
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () =>
-  require('react-native-vector-icons/Ionicons')
+  require('react-native-vector-icons/Ionicons'),
 );
 jest.mock('react-native-vector-icons/Feather', () =>
-  require('react-native-vector-icons/Ionicons')
+  require('react-native-vector-icons/Ionicons'),
 );
 
 /**
  * Global error handler for unhandled promise rejections
  */
-process.on('unhandledRejection', (error) => {
+process.on('unhandledRejection', error => {
   console.error('UNHANDLED PROMISE REJECTION:', error);
 });
 
@@ -1237,7 +1295,7 @@ global.testUtils = {
     jest.runAllTimers();
   },
 
-  advanceTimersByTime: (ms) => {
+  advanceTimersByTime: ms => {
     jest.advanceTimersByTime(ms);
   },
 

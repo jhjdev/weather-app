@@ -6,6 +6,7 @@ import { createLogger } from 'redux-logger';
 import themeReducer, { ThemeState } from './slices/themeSlice';
 import weatherReducer from './slices/weatherSlice';
 import searchReducer from './slices/searchSlice';
+import authReducer from './slices/authSlice';
 
 const themePersistConfig = {
   key: 'theme',
@@ -19,11 +20,19 @@ const searchPersistConfig = {
   whitelist: ['searchHistory'], // Only persist the search history
 };
 
+// Auth persist config
+const authPersistConfig = {
+  key: 'auth',
+  storage: AsyncStorage,
+  whitelist: ['user', 'token', 'refreshToken', 'isAuthenticated'], // Persist auth state
+};
+
 // Define the root reducer with proper typing
 const rootReducer = {
   theme: persistReducer<ThemeState>(themePersistConfig, themeReducer),
   weather: weatherReducer,
   search: persistReducer(searchPersistConfig, searchReducer),
+  auth: persistReducer(authPersistConfig, authReducer),
 };
 
 export const store = configureStore({

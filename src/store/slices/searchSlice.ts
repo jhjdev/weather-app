@@ -116,7 +116,7 @@ const searchSlice = createSlice({
         const validatedHistory = action.payload.search.searchHistory.filter(
           (item: any) => {
             const isValid = isValidSearchHistoryItem(item);
-            
+
             if (!isValid) {
               console.warn(
                 'Invalid history item found during rehydration:',

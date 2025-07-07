@@ -15,6 +15,7 @@ import { updateSystemTheme } from './src/store/slices/themeSlice';
 import { RootState } from './src/store';
 import AppNavigator from './src/navigation';
 import { getColors } from './src/theme/colors';
+import { ThemeProvider } from './src/styles/ThemeProvider';
 
 // Theme change listener component
 const ThemeListener = () => {
@@ -46,7 +47,7 @@ const AppWrapper = () => {
   const colors = getColors(isDarkMode);
 
   return (
-    <>
+    <ThemeProvider initialTheme={isDarkMode ? 'dark' : 'light'}>
       <ThemeListener />
       <StatusBar
         barStyle={colors.statusBar.style}
@@ -54,7 +55,7 @@ const AppWrapper = () => {
         translucent={true}
       />
       <AppNavigator />
-    </>
+    </ThemeProvider>
   );
 };
 

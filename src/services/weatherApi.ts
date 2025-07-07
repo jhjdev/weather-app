@@ -1,19 +1,14 @@
-// Import centralized environment configuration
-import { env } from '../config/env';
-
-// API Configuration is loaded from environment configuration
-const WEATHER_ENDPOINT = '/data/2.5/weather';
-const FORECAST_ENDPOINT = '/data/2.5/forecast';
-const GEO_ENDPOINT = '/geo/1.0/direct';
-
-// Default parameters for API requests
-const DEFAULT_PARAMS = {
-  appid: env.weather.apiKey,
-  units: 'metric', // Celsius
-};
-// API key is validated at module initialization
-
-const TIMEOUT = 10000; // 10 seconds
+/**
+ * Weather API Service
+ *
+ * This service provides weather data using the Hostaway Assessment API
+ * and maintains backward compatibility with the existing app structure.
+ */
+import {
+  apiService,
+  WeatherData as ApiWeatherData,
+  WeatherHistoryItem,
+} from './apiService';
 
 // Error Types
 export interface ApiError {
@@ -22,7 +17,7 @@ export interface ApiError {
   status?: number;
 }
 
-// Weather Types
+// Weather Types for backward compatibility
 export interface WeatherCondition {
   id: number;
   main: string;
@@ -47,80 +42,6 @@ export interface WindData {
   gust?: number;
 }
 
-export interface CloudsData {
-  all: number;
-}
-
-export interface SysData {
-  type?: number;
-  id?: number;
-  country: string;
-  sunrise: number;
-  sunset: number;
-}
-
-export interface WeatherResponse {
-  coord: {
-    lon: number;
-    lat: number;
-  };
-  weather: WeatherCondition[];
-  base: string;
-  main: MainWeatherData;
-  visibility: number;
-  wind: WindData;
-  clouds: CloudsData;
-  dt: number;
-  sys: SysData;
-  timezone: number;
-  id: number;
-  name: string;
-  cod: number;
-}
-
-// Forecast Types
-export interface ForecastItem {
-  dt: number;
-  main: MainWeatherData;
-  weather: WeatherCondition[];
-  clouds: CloudsData;
-  wind: WindData;
-  visibility: number;
-  pop: number;
-  dt_txt: string;
-}
-
-export interface ForecastResponse {
-  cod: string;
-  message: number;
-  cnt: number;
-  list: ForecastItem[];
-  city: {
-    id: number;
-    name: string;
-    coord: {
-      lat: number;
-      lon: number;
-    };
-    country: string;
-    population: number;
-    timezone: number;
-    sunrise: number;
-    sunset: number;
-  };
-}
-
-// Geocoding Types
-export interface GeocodingResponse {
-  name: string;
-  local_names?: Record<string, string>;
-  lat: number;
-  lon: number;
-  country: string;
-  state?: string;
-}
-
-// Transformed Types for our app
 export interface WeatherData {
   location: {
     name: string;
@@ -135,12 +56,13 @@ export interface WeatherData {
     windSpeed: number;
     condition: WeatherCondition;
     timestamp: number;
-    sunrise: number;
-    sunset: number;
+    sunrise?: number;
+    sunset?: number;
   };
 }
 
-export interface DailyForecastData {
+// Forecast Types
+export interface DailyForecast {
   date: number;
   minTemp: number;
   maxTemp: number;
@@ -156,9 +78,10 @@ export interface ForecastData {
     lat: number;
     lon: number;
   };
-  forecast: DailyForecastData[];
+  forecast: DailyForecast[];
 }
 
+// Location Search Types
 export interface LocationSearchResult {
   id: string;
   name: string;
@@ -168,267 +91,157 @@ export interface LocationSearchResult {
   lon: number;
 }
 
-// Utility function to build API URLs
-const buildUrl = (endpoint: string, params: Record<string, any>): string => {
-  // Debug log for the API key that's being loaded
-  console.log('Weather API Configuration:', {
-    apiKey: env.weather.apiKey,
-    apiUrl: env.weather.apiUrl,
-  });
-  
-  // Ensure endpoint starts with /
-  if (!endpoint.startsWith('/')) {
-    endpoint = `/${endpoint}`;
-  }
+// Transform API weather data to app format
+const transformWeatherData = (
+  data: ApiWeatherData,
+  lat: number,
+  lon: number,
+): WeatherData => {
+  // Parse location from string if needed
+  const locationParts = data.location.split(',');
+  const cityName = locationParts[0]?.trim() || 'Unknown';
+  const country = locationParts[1]?.trim() || '';
 
-  // Add debug log for the params
-  console.log('Building URL with params:', {
-    endpoint,
-    params,
-    allParams: { ...DEFAULT_PARAMS, ...params }
-  });
+  // Create weather condition from description
+  const condition: WeatherCondition = {
+    id: 800, // Default to clear sky
+    main: data.description.includes('cloud')
+      ? 'Clouds'
+      : data.description.includes('rain')
+      ? 'Rain'
+      : 'Clear',
+    description: data.description,
+    icon: '01d', // Default icon
+  };
 
-  // Create URL with base and endpoint
-  const url = new URL(endpoint, env.weather.apiUrl);
-
-  // Add all parameters
-  const allParams = { ...DEFAULT_PARAMS, ...params };
-  Object.entries(allParams).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
-
-  return url.toString();
-};
-
-// Generic fetch function with timeout
-const fetchWithTimeout = async <T>(url: string): Promise<T> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
-
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      let errorMessage = 'Failed to fetch data';
-
-      if (response.status === 401) {
-        errorMessage = 'Invalid API key';
-      } else if (response.status === 404) {
-        errorMessage = 'Resource not found';
-      } else if (response.status >= 500) {
-        errorMessage = 'Server error. Please try again later.';
-      } else if (response.status === 400) {
-        errorMessage = 'Bad request. Check parameters.';
-      }
-
-      throw {
-        message: errorMessage,
-        status: response.status,
-        code: response.status,
-      };
-    }
-
-    return response.json() as Promise<T>;
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw {
-        message: 'Request timed out',
-        code: 408,
-      };
-    }
-    throw error;
-  }
-};
-
-// Transform response data to our app format
-const transformWeatherData = (data: WeatherResponse): WeatherData => {
   return {
     location: {
-      name: data.name,
-      country: data.sys.country,
-      lat: data.coord.lat,
-      lon: data.coord.lon,
+      name: cityName,
+      country: country,
+      lat: lat,
+      lon: lon,
     },
     current: {
-      temperature: data.main.temp,
-      feelsLike: data.main.feels_like,
-      humidity: data.main.humidity,
-      windSpeed: data.wind.speed,
-      condition: data.weather[0],
-      timestamp: data.dt,
-      sunrise: data.sys.sunrise,
-      sunset: data.sys.sunset,
+      temperature: data.temperature,
+      feelsLike: data.temperature, // API doesn't provide feels like, use temperature
+      humidity: data.humidity,
+      windSpeed: data.windSpeed,
+      condition: condition,
+      timestamp: new Date(data.timestamp).getTime() / 1000, // Convert to Unix timestamp
+      sunrise: undefined, // API doesn't provide sunrise/sunset
+      sunset: undefined,
     },
   };
 };
 
-// Group forecast items by day and get min/max temps
-const transformForecastData = (data: ForecastResponse): ForecastData => {
-  // Group forecast items by day
-  const groupedByDay = data.list.reduce<Record<string, ForecastItem[]>>(
-    (acc, item) => {
-      // Get the date part of dt_txt (YYYY-MM-DD)
-      const date = item.dt_txt.split(' ')[0];
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(item);
-      return acc;
-    },
-    {},
-  );
-
-  // Transform each day's data
-  const dailyForecast = Object.values(groupedByDay).map(items => {
-    // Find min and max temperatures for the day
-    const minTemp = Math.min(...items.map(item => item.main.temp_min));
-    const maxTemp = Math.max(...items.map(item => item.main.temp_max));
-
-    // Use the middle of the day (noon) forecast for conditions
-    const middayForecast =
-      items.find(item => item.dt_txt.includes('12:00:00')) || items[0];
-
-    return {
-      date: middayForecast.dt,
-      minTemp,
-      maxTemp,
-      condition: middayForecast.weather[0],
-      humidity: middayForecast.main.humidity,
-      windSpeed: middayForecast.wind.speed,
-    };
-  });
+// Transform weather history item to weather data
+const transformHistoryItem = (item: WeatherHistoryItem): WeatherData => {
+  const condition: WeatherCondition = {
+    id: 800,
+    main: item.weatherData.description.includes('cloud')
+      ? 'Clouds'
+      : item.weatherData.description.includes('rain')
+      ? 'Rain'
+      : 'Clear',
+    description: item.weatherData.description,
+    icon: item.weatherData.icon || '01d',
+  };
 
   return {
     location: {
-      name: data.city.name,
-      country: data.city.country,
-      lat: data.city.coord.lat,
-      lon: data.city.coord.lon,
+      name: item.location.name,
+      country: item.location.country,
+      lat: item.location.lat,
+      lon: item.location.lon,
     },
-    forecast: dailyForecast,
+    current: {
+      temperature: item.weatherData.temperature,
+      feelsLike: item.weatherData.temperature, // Use same value as temperature
+      humidity: item.weatherData.humidity,
+      windSpeed: item.weatherData.windSpeed,
+      condition: condition,
+      timestamp: new Date(item.createdAt).getTime() / 1000, // Convert to Unix timestamp
+      sunrise: undefined, // API doesn't provide sunrise/sunset
+      sunset: undefined,
+    },
   };
 };
 
-// Transform geocoding response to location search results
-const transformLocationResults = (
-  data: GeocodingResponse[],
-): LocationSearchResult[] => {
-  if (!data || data.length === 0) {
-    return [];
-  }
+// Helper function to create ApiError
+function createApiError(message: string, code: number = 500): ApiError {
+  return {message, code};
+}
 
-  return data.map(item => {
-    // Ensure we have all required properties
-    if (!item.name || !item.country || typeof item.lat !== 'number' || typeof item.lon !== 'number') {
-      console.warn('Geocoding result missing required properties:', item);
+// API function to get current weather
+export const getCurrentWeather = async (city: string): Promise<WeatherData> => {
+  try {
+    // Initialize API service
+    await apiService.initialize();
+
+    // Check if user is authenticated
+    const isAuthenticated = await apiService.isAuthenticated();
+    if (!isAuthenticated) {
+      throw createApiError(
+        'Authentication required. Please log in to access weather data.',
+        401,
+      );
+    }
+
+    // Fetch weather data from API
+    const weatherData = await apiService.getCurrentWeather(city);
+
+    // Transform and return data
+    return transformWeatherData(weatherData, 0, 0); // Use 0,0 for coordinates since we don't have them
+  } catch (error) {
+    console.error('Error fetching current weather:', error);
+    throw {
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Failed to fetch current weather',
+      code: (error as any)?.statusCode || 500,
+    };
+  }
+};
+
+// API function to get forecast (using current weather for now)
+export const getForecast = async (city: string): Promise<ForecastData> => {
+  try {
+    // Get current weather and create a simple forecast
+    const currentWeather = await getCurrentWeather(city);
+
+    // Create a simple 5-day forecast based on current weather
+    const forecast: DailyForecast[] = [];
+    const today = new Date();
+
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+
+      // Add some variation to temperature
+      const tempVariation = (Math.random() - 0.5) * 10; // ±5°C variation
+      const temp = currentWeather.current.temperature + tempVariation;
+
+      forecast.push({
+        date: date.getTime() / 1000,
+        minTemp: temp - 5,
+        maxTemp: temp + 5,
+        condition: currentWeather.current.condition,
+        humidity: currentWeather.current.humidity,
+        windSpeed: currentWeather.current.windSpeed,
+      });
     }
 
     return {
-      id: `${item.lat}_${item.lon}`,
-      name: item.name,
-      country: item.country,
-      state: item.state,
-      lat: item.lat,
-      lon: item.lon,
+      location: currentWeather.location,
+      forecast: forecast,
     };
-  });
-};
-
-// API function to get current weather
-export const getCurrentWeather = async (
-  lat: number,
-  lon: number,
-): Promise<WeatherData> => {
-  try {
-    // Build URL and fetch data
-    const url = buildUrl(WEATHER_ENDPOINT, {lat, lon});
-    const response = await fetchWithTimeout<WeatherResponse>(url);
-
-    // Transform and return data
-    return transformWeatherData(response);
   } catch (error) {
-    // Error handled by caller
+    console.error('Error fetching forecast:', error);
     throw {
       message:
-        typeof error === 'object' && error !== null && 'message' in error
-          ? (error as any).message
-          : 'Failed to fetch current weather',
-      code:
-        typeof error === 'object' && error !== null && 'code' in error
-          ? (error as any).code
-          : 500,
-    };
-  }
-};
-
-// API function to get forecast
-export const getForecast = async (
-  lat: number,
-  lon: number,
-): Promise<ForecastData> => {
-  try {
-    // Build URL and fetch data
-    const url = buildUrl(FORECAST_ENDPOINT, {lat, lon});
-    const response = await fetchWithTimeout<ForecastResponse>(url);
-
-    // Transform and return data
-    return transformForecastData(response);
-  } catch (error) {
-    // Error handled by caller
-    throw {
-      message:
-        typeof error === 'object' && error !== null && 'message' in error
-          ? (error as any).message
-          : 'Failed to fetch forecast',
-      code:
-        typeof error === 'object' && error !== null && 'code' in error
-          ? (error as any).code
-          : 500,
-    };
-  }
-};
-
-// Helper function specifically for Geocoding API
-const fetchGeocodingData = async (query: string): Promise<GeocodingResponse[]> => {
-  // Validate input query
-  if (!query || typeof query !== 'string') {
-    throw new Error('Search query is required and must be a non-empty string');
-  }
-
-  const cleanQuery = query.trim();
-
-  if (cleanQuery.length < 2) {
-    throw new Error('Search query must be at least 2 characters long');
-  }
-
-  try {
-    const encodedQuery = encodeURIComponent(cleanQuery);
-    const geocodingUrl = buildUrl(GEO_ENDPOINT, { q: encodedQuery, limit: 5 });
-
-    const data = await fetchWithTimeout<GeocodingResponse[]>(geocodingUrl);
-
-    if (!Array.isArray(data)) {
-      throw new Error('Invalid response format from geocoding API');
-    }
-
-    return data;
-  } catch (error) {
-    // Error handled by caller
-    throw {
-      message: typeof error === 'object' && error !== null && 'message' in error
-        ? (error as any).message
-        : 'Failed to fetch geocoding data',
-      code: typeof error === 'object' && error !== null && 'code' in error
-        ? (error as any).code
-        : 500,
+        error instanceof Error ? error.message : 'Failed to fetch forecast',
+      code: (error as any)?.statusCode || 500,
     };
   }
 };
@@ -442,38 +255,75 @@ export const searchLocations = async (
   }
 
   try {
-    // Use the dedicated geocoding fetch function
-    const data = await fetchGeocodingData(query);
-    // Transform the data to our app format
-    return transformLocationResults(data);
-  } catch (error) {
-    // Error handled by caller
+    // Initialize API service
+    await apiService.initialize();
 
-    // Provide more detailed error messages based on the error type
-    let errorMessage = 'Failed to search locations';
-    let errorCode = 500;
-
-    if (typeof error === 'object' && error !== null) {
-      if ('message' in error) {
-        errorMessage = (error as any).message;
-      }
-      if ('code' in error) {
-        errorCode = (error as any).code;
-      } else if ('status' in error) {
-        errorCode = (error as any).status;
-      }
-
-      // Special case for common errors
-      if (errorCode === 404) {
-        errorMessage = 'Location search service not available (404). Please check API configuration.';
-      } else if (errorCode === 401) {
-        errorMessage = 'Invalid API key for location search.';
-      }
+    // Check if user is authenticated
+    const isAuthenticated = await apiService.isAuthenticated();
+    if (!isAuthenticated) {
+      throw createApiError(
+        'Authentication required. Please log in to search locations.',
+        401,
+      );
     }
 
+    // Search weather for the location
+    const searchResult = await apiService.searchWeather(query);
+
+    // Transform to location search result
+    const locationResult: LocationSearchResult = {
+      id: `${searchResult.location.lat}_${searchResult.location.lon}`,
+      name: searchResult.location.name,
+      country: searchResult.location.country,
+      state: undefined, // API doesn't provide state
+      lat: searchResult.location.lat,
+      lon: searchResult.location.lon,
+    };
+
+    return [locationResult];
+  } catch (error) {
+    console.error('Error searching locations:', error);
     throw {
-      message: errorMessage,
-      code: errorCode,
+      message:
+        error instanceof Error ? error.message : 'Failed to search locations',
+      code: (error as any)?.statusCode || 500,
     };
   }
 };
+
+// Helper function to get weather history
+export const getWeatherHistory = async (): Promise<WeatherData[]> => {
+  try {
+    // Initialize API service
+    await apiService.initialize();
+
+    // Check if user is authenticated
+    const isAuthenticated = await apiService.isAuthenticated();
+    if (!isAuthenticated) {
+      throw createApiError(
+        'Authentication required. Please log in to access weather history.',
+        401,
+      );
+    }
+
+    // Get weather history from API
+    const history = await apiService.getWeatherHistory();
+
+    // Transform results to WeatherData format
+    return history.map((result: WeatherHistoryItem) =>
+      transformHistoryItem(result),
+    );
+  } catch (error) {
+    console.error('Error fetching weather history:', error);
+    throw {
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Failed to fetch weather history',
+      code: (error as any)?.statusCode || 500,
+    };
+  }
+};
+
+// Export the API service for direct access if needed
+export {apiService};

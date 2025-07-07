@@ -1,14 +1,17 @@
 import React from 'react';
-import { ScrollView, SafeAreaView, StyleSheet } from 'react-native';
+import { ScrollView, SafeAreaView, StyleSheet, View, Text } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { useWeather } from '../hooks/useWeather';
+import { useThemedStyles } from '../styles/ThemeProvider';
+import { Theme } from '../styles/theme';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
-import WeatherDisplay from '../components/weather/WeatherDisplay';
+import WeatherCard from '../components/weather/WeatherCard';
 import Header from '../components/common/Header';
 
 const HomeScreen: React.FC = () => {
+  const styles = useThemedStyles(createStyles);
   const { loading, error, refreshWeather } = useWeather();
   const { currentLocation, currentWeather } = useSelector(
     (state: RootState) => state.weather
@@ -30,23 +33,36 @@ const HomeScreen: React.FC = () => {
         bounces={true}
         showsVerticalScrollIndicator={false}
       >
-        <WeatherDisplay
-          currentLocation={currentLocation}
-          currentWeather={currentWeather}
-        />
+        {currentLocation && currentWeather ? (
+          <WeatherCard location={currentLocation} weather={currentWeather} />
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No weather data available</Text>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: Theme) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: theme.colors.background.primary,
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 20,
+    padding: theme.spacing.lg,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: theme.typography.sizes.lg,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
   },
 });
 
