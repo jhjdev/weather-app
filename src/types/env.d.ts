@@ -1,11 +1,16 @@
 declare module '@env' {
   /**
-   * OpenWeather API key used for weather data requests
+   * Hostaway Assessment API base URL
    */
-  export const OPENWEATHER_API_KEY: string;
+  export const HOSTAWAY_API_URL: string;
 
   /**
-   * OpenWeather API base URL
+   * API Secret Key for the Hostaway Assessment API
    */
-  export const OPENWEATHER_API_URL: string;
+  export const API_SECRET_KEY: string;
+
+  /**
+   * JWT Secret for token signing and verification
+   */
+  export const JWT_SECRET: string;
 }

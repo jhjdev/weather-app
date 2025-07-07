@@ -26,8 +26,7 @@ import {
   setSearchLoading,
   setSearchError,
 } from '../store/slices/searchSlice';
-import {searchLocations} from '../services/weatherApi';
-import {getCurrentWeather} from '../services/weatherApi';
+import {apiService} from '../services/apiService';
 
 // Define LocationItem component outside of SearchScreen
 interface LocationItemProps {
@@ -142,39 +141,40 @@ const SearchScreen: React.FC = () => {
     error: searchApiError,
     currentSearchTerm,
   } = useSelector((state: RootState) => state.search);
-  const [selectedLocation, setSelectedLocation] = useState<SearchHistoryItem | null>(null);
+  const [selectedLocation, setSelectedLocation] =
+    useState<SearchHistoryItem | null>(null);
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
   const [selectedLocationWeather, setSelectedLocationWeather] =
     useState<any>(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState<boolean>(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
 
-  // Use the real API for location search
+  // Use the new API for weather search
   useEffect(() => {
     const fetchLocations = async () => {
       if (currentSearchTerm.length > 2) {
         dispatch(setSearchLoading(true));
         try {
-          console.log('Searching with term:', currentSearchTerm);
-          const results = await searchLocations(currentSearchTerm);
-          console.log('Raw API results:', JSON.stringify(results));
-
-          dispatch(
-            setSearchResults(
-              results.map(item => ({
-                id: item.id,
-                name: item.name || 'Unknown',
-                country: item.country || 'Unknown',
-                lat: item.lat,
-                lon: item.lon,
-              })),
-            ),
+          console.log('Searching weather for location:', currentSearchTerm);
+          const weatherResult = await apiService.searchWeather(
+            currentSearchTerm,
           );
+          console.log('Weather search result:', JSON.stringify(weatherResult));
 
-          console.log('Dispatched results to Redux');
+          // Convert weather result to search result format
+          const searchResult: SearchResult = {
+            id: `${weatherResult.location.lat}-${weatherResult.location.lon}`,
+            name: weatherResult.location.name,
+            country: weatherResult.location.country,
+            lat: weatherResult.location.lat,
+            lon: weatherResult.location.lon,
+          };
+
+          dispatch(setSearchResults([searchResult]));
+          console.log('Dispatched weather search result to Redux');
         } catch (searchErr) {
-          console.error('Search failed:', searchErr);
-          dispatch(setSearchError('Failed to search locations'));
+          console.error('Weather search failed:', searchErr);
+          dispatch(setSearchError('Failed to search weather for location'));
         } finally {
           dispatch(setSearchLoading(false));
         }
@@ -196,23 +196,20 @@ const SearchScreen: React.FC = () => {
   };
 
   // Fetch weather data for a selected location
-  const fetchWeatherForLocation = useCallback(
-    async (lat: number, lon: number) => {
-      setIsLoadingWeather(true);
-      setWeatherError(null);
+  const fetchWeatherForLocation = useCallback(async (city: string) => {
+    setIsLoadingWeather(true);
+    setWeatherError(null);
 
-      try {
-        const weatherData = await getCurrentWeather(lat, lon);
-        setSelectedLocationWeather(weatherData);
-      } catch (weatherErr) {
-        console.error('Error fetching weather for location:', weatherErr);
-        setWeatherError('Failed to load weather data');
-      } finally {
-        setIsLoadingWeather(false);
-      }
-    },
-    [],
-  );
+    try {
+      const weatherData = await apiService.getCurrentWeather(city);
+      setSelectedLocationWeather(weatherData);
+    } catch (weatherErr) {
+      console.error('Error fetching weather for location:', weatherErr);
+      setWeatherError('Failed to load weather data');
+    } finally {
+      setIsLoadingWeather(false);
+    }
+  }, []);
 
   // Handle selecting a location from search results
   const handleSelectLocation = useCallback(
@@ -251,7 +248,7 @@ const SearchScreen: React.FC = () => {
       Keyboard.dismiss();
 
       // Fetch weather for the selected location
-      fetchWeatherForLocation(location.lat, location.lon);
+      fetchWeatherForLocation(location.name);
     },
     [dispatch, fetchWeatherForLocation],
   );

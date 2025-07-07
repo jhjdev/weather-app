@@ -1,17 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, ColorValue } from 'react-native';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
-import { getColors } from '../../theme';
+import {View, Text, StyleSheet, ViewStyle, ColorValue} from 'react-native';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../store';
+import {getColors} from '../../theme';
 
 interface HeaderProps {
   title: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ title }) => {
-  const { isDark } = useSelector((state: RootState) => state.theme);
+const Header: React.FC<HeaderProps> = ({title}) => {
+  const {isDark} = useSelector((state: RootState) => state.theme);
   const colors = getColors(isDark);
-  
+
   // Define dynamic styles with proper typing
   const dynamicStyles: ViewStyle = {
     backgroundColor: colors.card.background as ColorValue,
@@ -23,9 +23,8 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
       style={[styles.container, dynamicStyles]}
       accessible={true}
       accessibilityRole="header"
-      accessibilityLabel={title}
-    >
-      <Text style={[styles.title, { color: 'red' }]}>
+      accessibilityLabel={title}>
+      <Text style={[styles.title, {color: colors.primary}]}>
         {title.toUpperCase()}
       </Text>
     </View>
@@ -40,7 +39,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, // Standard Material padding
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 2,
     borderBottomWidth: 1,

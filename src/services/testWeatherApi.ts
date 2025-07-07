@@ -1,21 +1,20 @@
-import { getCurrentWeather, getForecast, searchLocations } from './weatherApi';
+import {getCurrentWeather, getForecast, searchLocations} from './weatherApi';
 
-// Test coordinates that we know work (as verified by curl command)
-const TEST_LAT = 35;
-const TEST_LON = 139;
+// Test city name that we know works (as verified by curl command)
+const TEST_CITY = 'Tokyo';
 const TEST_QUERY = 'Tokyo';
 
 console.log('=================================================');
 console.log('STARTING WEATHER API TEST');
 console.log('=================================================');
-console.log(`Testing with coordinates: lat=${TEST_LAT}, lon=${TEST_LON}`);
+console.log(`Testing with city: ${TEST_CITY}`);
 console.log('=================================================');
 
 // Helper function to run tests
 const runTests = async () => {
   try {
     console.log('TEST 1: Getting current weather...');
-    const currentWeather = await getCurrentWeather(TEST_LAT, TEST_LON);
+    const currentWeather = await getCurrentWeather(TEST_CITY);
     console.log('✅ Current weather test PASSED!');
     console.log('Weather data:', JSON.stringify(currentWeather, null, 2));
   } catch (error) {
@@ -25,7 +24,7 @@ const runTests = async () => {
 
   try {
     console.log('\nTEST 2: Getting forecast...');
-    const forecast = await getForecast(TEST_LAT, TEST_LON);
+    const forecast = await getForecast(TEST_CITY);
     console.log('✅ Forecast test PASSED!');
     console.log('Forecast data:', JSON.stringify(forecast, null, 2));
   } catch (error) {
@@ -53,9 +52,8 @@ runTests()
   .then(() => {
     console.log('All tests executed');
   })
-  .catch((err) => {
+  .catch(err => {
     console.error('Test execution error:', err);
   });
 
 export {};
-

@@ -6,7 +6,6 @@ import {
   fetchCurrentWeather,
   fetchForecast,
 } from '../store/slices/weatherSlice';
-import { getCurrentWeather } from '../services/weatherApi';
 import {
   getCurrentLocation,
   LocationCoordinates,
@@ -57,50 +56,25 @@ export const useWeather = (): UseWeatherReturn => {
         // Get user location
         const coords: LocationCoordinates = await getCurrentLocation();
 
-        // Initially update location in Redux with coordinates only
+        // Update location in Redux with coordinates
         await dispatch(
           setLocationAsync({
             latitude: coords.latitude,
             longitude: coords.longitude,
+            city: 'Current Location',
+            country: '',
           }),
         );
 
-        try {
-          // Get city and country directly from the API before any transformation
-          console.log('Fetching weather data for coordinates:', coords);
-          const weatherData = await getCurrentWeather(coords.latitude, coords.longitude);
-
-          // Log the weather data response for debugging
-          console.log('Weather API response:', JSON.stringify(weatherData, null, 2));
-
-          if (weatherData && weatherData.location) {
-            // Update Redux store with the actual city name and country from the weather API
-            console.log('Updating location with city:', weatherData.location.name);
-            await dispatch(
-              setLocationAsync({
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-                city: weatherData.location.name || 'Current Location',
-                country: weatherData.location.country || '',
-              }),
-            );
-          } else {
-            console.warn('Weather API response missing location data');
-          }
-        } catch (cityFetchError) {
-          console.error('Error fetching city data from weather API:', cityFetchError);
-          // If there's an error getting the city name, continue with the current location placeholder
-        }
-
-        // Now fetch and store the weather data in Redux
+        // Fetch weather data using Redux actions
         await Promise.all([
           dispatch(fetchCurrentWeather()),
           dispatch(fetchForecast()),
         ]);
       } catch (locationFetchError) {
-        const locationError = locationFetchError as LocationError;
-        setLocationError(locationError.message);
-        console.error('Location error:', locationError.message);
+        const locationErr = locationFetchError as LocationError;
+        setLocationError(locationErr.message);
+        console.error('Location error:', locationErr.message);
       } finally {
         setLocationLoading(false);
       }

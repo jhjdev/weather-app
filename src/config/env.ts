@@ -1,51 +1,59 @@
 /**
  * Environment Configuration
- * 
+ *
  * This file centralizes all environment variables used in the application
  * and provides runtime validation to catch missing configuration early.
  */
-import { OPENWEATHER_API_KEY, OPENWEATHER_API_URL } from '@env';
 
-// Add immediate console logging
-console.log('Environment Variables Loaded:', {
-  OPENWEATHER_API_KEY: OPENWEATHER_API_KEY ? 'First 8 chars: ' + OPENWEATHER_API_KEY.substring(0, 8) + '...' : 'undefined',
-  OPENWEATHER_API_URL,
-});
+// Direct import from @env for React Native
+import {
+  HOSTAWAY_API_URL,
+  API_SECRET_KEY,
+  JWT_SECRET,
+} from '@env';
 
 // Define the shape of our environment configuration
 interface EnvironmentConfig {
-  weather: {
-    apiKey: string;
-    apiUrl: string;
+  api: {
+    baseUrl: string;
+    secretKey?: string;
+    jwtSecret?: string;
   };
+  isDevelopment: boolean;
+  isProduction: boolean;
+  isTest: boolean;
 }
 
 // Runtime validation: throw error immediately if required variables are missing
 const validateEnv = (): EnvironmentConfig => {
-  // Validate weather API configuration
-  if (!OPENWEATHER_API_KEY) {
+  // Validate API configuration
+  if (!HOSTAWAY_API_URL) {
     throw new Error(
-      'Missing OPENWEATHER_API_KEY in environment variables.\n' +
-      'Please check your .env file and make sure this variable is set correctly.'
+      'Missing HOSTAWAY_API_URL in environment variables.\n' +
+        'Please check your .env file and make sure this variable is set correctly.',
     );
   }
 
-  if (!OPENWEATHER_API_URL) {
-    throw new Error(
-      'Missing OPENWEATHER_API_URL in environment variables.\n' +
-      'Please check your .env file and make sure this variable is set correctly.'
-    );
+  // Log environment info in development only
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 Environment Variables Loaded:', {
+      HOSTAWAY_API_URL,
+      API_SECRET_KEY: API_SECRET_KEY
+        ? `${API_SECRET_KEY.substring(0, 8)}...`
+        : 'undefined',
+      JWT_SECRET: JWT_SECRET ? `${JWT_SECRET.substring(0, 8)}...` : 'undefined',
+    });
   }
-
-  // Debug log to see what values are being loaded
-  console.log('Loaded Weather API Key:', OPENWEATHER_API_KEY ? 'First 8 chars: ' + OPENWEATHER_API_KEY.substring(0, 8) + '...' : 'undefined');
-  console.log('Loaded Weather API URL:', OPENWEATHER_API_URL);
 
   return {
-    weather: {
-      apiKey: OPENWEATHER_API_KEY,
-      apiUrl: OPENWEATHER_API_URL,
+    api: {
+      baseUrl: HOSTAWAY_API_URL,
+      secretKey: API_SECRET_KEY,
+      jwtSecret: JWT_SECRET,
     },
+    isDevelopment: process.env.NODE_ENV === 'development',
+    isProduction: process.env.NODE_ENV === 'production',
+    isTest: process.env.NODE_ENV === 'test',
   };
 };
 
@@ -53,11 +61,16 @@ const validateEnv = (): EnvironmentConfig => {
 export const env = validateEnv();
 
 // Export a helper to use in tests or mock environments
-export const createMockEnv = (overrides?: Partial<EnvironmentConfig>): EnvironmentConfig => ({
-  weather: {
-    apiKey: 'mock-api-key',
-    apiUrl: 'https://api.example.com',
+export const createMockEnv = (
+  overrides?: Partial<EnvironmentConfig>,
+): EnvironmentConfig => ({
+  api: {
+    baseUrl: 'https://api.example.com',
+    secretKey: 'mock-secret-key',
+    jwtSecret: 'mock-jwt-secret',
   },
+  isDevelopment: false,
+  isProduction: false,
+  isTest: true,
   ...overrides,
 });
-
