@@ -15,17 +15,18 @@ const USER_DATA_KEY = 'hostaway_user_data';
 // API endpoints
 const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/api/auth/login',
-    REGISTER: '/api/auth/register',
-    LOGOUT: '/api/auth/logout',
-    REFRESH: '/api/auth/refresh',
+    LOGIN: '/api/v1/auth/login',
+    REGISTER: '/api/v1/auth/register',
+    LOGOUT: '/api/v1/auth/logout',
+    REFRESH: '/api/v1/auth/refresh',
+    VERIFY_EMAIL: '/api/v1/auth/verify-email',
   },
   WEATHER: {
-    CURRENT: '/api/weather/current',
-    SEARCH: '/api/weather/search',
-    HISTORY: '/api/weather/history',
+    CURRENT: '/api/v1/weather/current',
+    FORECAST: '/api/v1/weather/forecast',
+    HISTORY: '/api/v1/weather/history',
   },
-  PROFILE: '/api/profile',
+  PROFILE: '/api/v1/profile',
   HEALTH: '/api/health',
 };
 
@@ -49,6 +50,15 @@ export interface RegisterData {
   password: string;
 }
 
+export interface VerifyEmailData {
+  email: string;
+  token: string;
+}
+
+export interface VerifyEmailResponse {
+  message: string;
+}
+
 export interface User {
   id: string;
   firstName: string;
@@ -62,10 +72,16 @@ export interface User {
 }
 
 export interface AuthResponse {
-  success: boolean;
+  message: string;
   user: User;
   token: string;
   refreshToken?: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  userId: string;
+  verificationCode: string;
 }
 
 export interface WeatherData {
@@ -75,6 +91,9 @@ export interface WeatherData {
   humidity: number;
   windSpeed: number;
   timestamp: string;
+  country?: string;
+  lat?: number;
+  lon?: number;
 }
 
 export interface WeatherSearchResult {
@@ -132,7 +151,13 @@ class ApiService {
 
   // Initialize service
   async initialize(): Promise<void> {
-    this.token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+    try {
+      this.token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+      console.log('API Service initialized with token:', this.token ? 'Present' : 'None');
+    } catch (error) {
+      console.error('Error initializing API service:', error);
+      this.token = null;
+    }
   }
 
   // Set auth token
@@ -242,8 +267,8 @@ class ApiService {
     return response;
   }
 
-  async register(userData: RegisterData): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>(
+  async register(userData: RegisterData): Promise<RegisterResponse> {
+    const response = await this.request<RegisterResponse>(
       API_ENDPOINTS.AUTH.REGISTER,
       {
         method: 'POST',
@@ -252,32 +277,11 @@ class ApiService {
       },
     );
 
-    // Store tokens
-    if (response.token) {
-      this.token = response.token;
-      await AsyncStorage.setItem(AUTH_TOKEN_KEY, response.token);
-
-      if (response.refreshToken) {
-        await AsyncStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
-      }
-
-      await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(response.user));
-    }
-
     return response;
   }
 
   async logout(): Promise<void> {
-    try {
-      // Call logout endpoint if available
-      await this.request(API_ENDPOINTS.AUTH.LOGOUT, {
-        method: 'POST',
-      });
-    } catch (error) {
-      console.warn('Logout endpoint failed:', error);
-    }
-
-    // Clear stored tokens
+    // Clear stored tokens (no server-side logout endpoint available)
     this.token = null;
     await AsyncStorage.multiRemove([
       AUTH_TOKEN_KEY,
@@ -308,6 +312,17 @@ class ApiService {
     return response.token;
   }
 
+  async verifyEmail(data: VerifyEmailData): Promise<VerifyEmailResponse> {
+    return this.request<VerifyEmailResponse>(
+      API_ENDPOINTS.AUTH.VERIFY_EMAIL,
+      {
+        method: 'POST',
+        body: data,
+        includeAuth: false,
+      },
+    );
+  }
+
   // Weather methods
   async getCurrentWeather(city: string): Promise<WeatherData> {
     const response = await this.request<{success: boolean; data: WeatherData}>(
@@ -317,7 +332,7 @@ class ApiService {
   }
 
   async searchWeather(location: string): Promise<WeatherSearchResult> {
-    // Since /api/weather/search doesn't exist, use current weather as fallback
+    // Use current weather endpoint for searching
     const response = await this.request<{success: boolean; data: WeatherData}>(
       `${API_ENDPOINTS.WEATHER.CURRENT}?city=${encodeURIComponent(location)}`,
     );
@@ -326,9 +341,9 @@ class ApiService {
     return {
       location: {
         name: response.data.location,
-        country: 'Unknown', // API doesn't provide country in current weather
-        lat: 0, // API doesn't provide coordinates
-        lon: 0,
+        country: response.data.country || 'Unknown',
+        lat: response.data.lat || 0,
+        lon: response.data.lon || 0,
       },
       weatherData: {
         temperature: response.data.temperature,
@@ -358,6 +373,13 @@ class ApiService {
     return this.request<User>(API_ENDPOINTS.PROFILE, {
       method: 'PUT',
       body: updates,
+    });
+  }
+
+  async deleteUserProfile(): Promise<{success: boolean; message: string}> {
+    return this.request<{success: boolean; message: string}>(API_ENDPOINTS.PROFILE, {
+      method: 'DELETE',
+      body: {},
     });
   }
 

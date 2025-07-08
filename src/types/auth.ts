@@ -5,8 +5,8 @@ export interface User {
   isVerified: boolean;
   isAdmin: boolean;
   isSuperAdmin?: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string; // Use ISO string instead of Date object for Redux compatibility
+  updatedAt: string; // Use ISO string instead of Date object for Redux compatibility
   preferences?: UserPreferences;
 }
 
@@ -40,9 +40,10 @@ export interface RegisterData {
 }
 
 export interface AuthResponse {
+  message?: string;
   user: User;
   token: string;
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 export interface VerificationRequest {

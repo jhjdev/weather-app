@@ -54,7 +54,7 @@ const AppWrapper = () => {
         backgroundColor={colors.statusBar.background}
         translucent={true}
       />
-      <AppNavigator />
+<AppNavigator />
     </ThemeProvider>
   );
 };

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "android": "react-native run-android",
-    "ios": "react-native run-ios",
+    "ios": "react-native run-ios --simulator=\"iPhone 16 Pro\"",
+    "ios:device": "react-native run-ios --device",
     "ios:sim": "react-native run-ios --simulator=\"iPhone 16 Pro\"",
     "ios:sim:no-packager": "react-native run-ios --simulator=\"iPhone 16 Pro\" --no-packager",
     "lint": "eslint .",
@@ -40,7 +41,7 @@
     "react-native-haptic-feedback": "^2.3.3",
     "react-native-image-picker": "^8.2.0",
     "react-native-linear-gradient": "^2.8.3",
-    "react-native-reanimated": "^3.6.0",
+    "react-native-reanimated": "^3.18.0",
     "react-native-safe-area-context": "^5.0.0",
     "react-native-screens": "^4.10.0",
     "react-native-svg": "^15.11.2",

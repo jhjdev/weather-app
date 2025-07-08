@@ -26,20 +26,23 @@ export interface InputProps extends Omit<TextInputProps, 'style'> {
   showPasswordToggle?: boolean;
 }
 
-export const Input: React.FC<InputProps> = ({
-  label,
-  error,
-  helper,
-  variant = 'outlined',
-  size = 'medium',
-  leftIcon,
-  rightIcon,
-  containerStyle,
-  inputStyle,
-  showPasswordToggle = false,
-  secureTextEntry,
-  ...props
-}) => {
+export const Input = React.forwardRef<TextInput, InputProps>((
+  {
+    label,
+    error,
+    helper,
+    variant = 'outlined',
+    size = 'medium',
+    leftIcon,
+    rightIcon,
+    containerStyle,
+    inputStyle,
+    showPasswordToggle = false,
+    secureTextEntry,
+    ...props
+  },
+  ref
+) => {
   const styles = useThemedStyles(createStyles);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -76,6 +79,7 @@ export const Input: React.FC<InputProps> = ({
         {leftIcon && <View style={styles.leftIconContainer}>{leftIcon}</View>}
 
         <TextInput
+          ref={ref}
           {...props}
           style={textInputStyle}
           secureTextEntry={shouldShowPassword}
@@ -88,6 +92,9 @@ export const Input: React.FC<InputProps> = ({
             props.onBlur?.(e);
           }}
           placeholderTextColor={styles.placeholder.color}
+          returnKeyType={props.returnKeyType || "next"}
+          blurOnSubmit={false}
+          enablesReturnKeyAutomatically
         />
 
         {isPassword && (
@@ -111,7 +118,7 @@ export const Input: React.FC<InputProps> = ({
       {helper && !error && <Text style={styles.helperText}>{helper}</Text>}
     </View>
   );
-};
+});
 
 const createStyles = (theme: Theme) =>
   StyleSheet.create({

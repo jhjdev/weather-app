@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,14 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Keyboard,
+  TouchableWithoutFeedback,
+  TextInput,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {useNavigation} from '@react-navigation/native';
 import {AppDispatch, RootState} from '../../store';
-import {registerUser, clearError} from '../../store/slices/authSlice';
+import {registerUser, verifyEmail, clearError} from '../../store/slices/authSlice';
 import {useThemedStyles} from '../../styles/ThemeProvider';
 import {Theme} from '../../styles/theme';
 import Input from '../../components/common/Input';
@@ -39,6 +42,13 @@ const RegisterScreen: React.FC = () => {
     confirmPassword: '',
   });
 
+  // Refs for field navigation
+  const nameRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmPasswordRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+
   // Clear errors when component mounts
   useEffect(() => {
     dispatch(clearError());
@@ -50,6 +60,29 @@ const RegisterScreen: React.FC = () => {
       Alert.alert('Registration Failed', error.message);
     }
   }, [error]);
+
+  // Keyboard event listeners for overlay behavior
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      // Get keyboard height
+      const keyboardHeight = event.endCoordinates.height;
+      
+      // Scroll to focused field with keyboard overlay
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    });
+
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      // Maintain scroll position when keyboard hides
+      // Don't auto-scroll to top to maintain user context
+    });
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   const validateForm = (): boolean => {
     const errors = {
@@ -110,16 +143,15 @@ const RegisterScreen: React.FC = () => {
         }),
       ).unwrap();
 
-      Alert.alert('Registration Successful!', result.message, [
-        {
-          text: 'OK',
-          onPress: () => navigation.navigate('EmailVerification' as never),
-        },
-      ]);
+      Alert.alert('Registration & Verification Successful!', 
+        'Your account has been created and automatically verified. You are now logged in. Welcome to the Weather App!'
+      );
+      // User is now automatically logged in, no navigation needed
     } catch (registerError) {
       // Error is handled by useEffect above
     }
   };
+
 
   const navigateToLogin = () => {
     navigation.navigate('Login' as never);
@@ -135,12 +167,18 @@ const RegisterScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled">
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          <ScrollView
+            ref={scrollViewRef}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            keyboardDismissMode="on-drag"
+            bounces={true}
+            automaticallyAdjustKeyboardInsets={false}
+            automaticallyAdjustContentInsets={false}
+            contentInsetAdjustmentBehavior="never">
           <View style={styles.header}>
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Join Weather App to get started</Text>
@@ -148,12 +186,15 @@ const RegisterScreen: React.FC = () => {
 
           <Card variant="elevated" style={styles.formCard}>
             <Input
+              ref={nameRef}
               label="Full Name"
               value={formData.name}
               onChangeText={value => updateFormData('name', value)}
               error={formErrors.name}
               placeholder="Enter your full name"
               autoCapitalize="words"
+              returnKeyType="next"
+              onSubmitEditing={() => emailRef.current?.focus()}
               leftIcon={
                 <Icon.User
                   width={20}
@@ -164,6 +205,7 @@ const RegisterScreen: React.FC = () => {
             />
 
             <Input
+              ref={emailRef}
               label="Email Address"
               value={formData.email}
               onChangeText={value => updateFormData('email', value)}
@@ -172,6 +214,13 @@ const RegisterScreen: React.FC = () => {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              returnKeyType="next"
+              onSubmitEditing={() => {
+                passwordRef.current?.focus();
+                setTimeout(() => {
+                  scrollViewRef.current?.scrollTo({ y: 150, animated: true });
+                }, 50);
+              }}
               leftIcon={
                 <Icon.Mail
                   width={20}
@@ -182,6 +231,7 @@ const RegisterScreen: React.FC = () => {
             />
 
             <Input
+              ref={passwordRef}
               label="Password"
               value={formData.password}
               onChangeText={value => updateFormData('password', value)}
@@ -189,6 +239,13 @@ const RegisterScreen: React.FC = () => {
               placeholder="Create a password"
               secureTextEntry
               showPasswordToggle
+              returnKeyType="next"
+              onSubmitEditing={() => {
+                confirmPasswordRef.current?.focus();
+                setTimeout(() => {
+                  scrollViewRef.current?.scrollTo({ y: 250, animated: true });
+                }, 50);
+              }}
               leftIcon={
                 <Icon.Lock
                   width={20}
@@ -200,6 +257,7 @@ const RegisterScreen: React.FC = () => {
             />
 
             <Input
+              ref={confirmPasswordRef}
               label="Confirm Password"
               value={formData.confirmPassword}
               onChangeText={value => updateFormData('confirmPassword', value)}
@@ -207,6 +265,8 @@ const RegisterScreen: React.FC = () => {
               placeholder="Confirm your password"
               secureTextEntry
               showPasswordToggle
+              returnKeyType="done"
+              onSubmitEditing={handleRegister}
               leftIcon={
                 <Icon.Lock
                   width={20}
@@ -233,8 +293,9 @@ const RegisterScreen: React.FC = () => {
               Sign In
             </Button>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 };
@@ -251,11 +312,12 @@ const createStyles = (theme: Theme) =>
     scrollContent: {
       flexGrow: 1,
       padding: theme.spacing.lg,
-      justifyContent: 'center',
+      paddingBottom: Platform.OS === 'ios' ? 300 : 200, // Extra space for keyboard overlay
     },
     header: {
       alignItems: 'center',
-      marginBottom: theme.spacing['3xl'],
+      marginTop: theme.spacing.lg,
+      marginBottom: theme.spacing.lg,
     },
     title: {
       fontSize: theme.typography.sizes['4xl'],
@@ -269,7 +331,7 @@ const createStyles = (theme: Theme) =>
       textAlign: 'center',
     },
     formCard: {
-      marginBottom: theme.spacing.xl,
+      marginBottom: theme.spacing.lg,
     },
     registerButton: {
       marginTop: theme.spacing.md,
@@ -285,6 +347,41 @@ const createStyles = (theme: Theme) =>
     },
     iconColor: {
       color: theme.colors.text.secondary,
+    },
+    verificationSection: {
+      alignItems: 'center',
+      marginBottom: theme.spacing.xl,
+    },
+    checkIcon: {
+      marginBottom: theme.spacing.md,
+    },
+    verificationTitle: {
+      fontSize: theme.typography.sizes['2xl'],
+      fontWeight: theme.typography.weights.bold,
+      color: theme.colors.text.primary,
+      marginBottom: theme.spacing.sm,
+    },
+    verificationMessage: {
+      fontSize: theme.typography.sizes.base,
+      color: theme.colors.text.secondary,
+      textAlign: 'center',
+      marginBottom: theme.spacing.md,
+      lineHeight: 24,
+    },
+    verificationInfo: {
+      fontSize: theme.typography.sizes.sm,
+      color: theme.colors.text.secondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
+    verifyButton: {
+      marginBottom: theme.spacing.md,
+    },
+    loginButton: {
+      marginTop: theme.spacing.sm,
+    },
+    successColor: {
+      color: theme.colors.success,
     },
   });
 

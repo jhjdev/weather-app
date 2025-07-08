@@ -1,5 +1,6 @@
 // Required imports for functionality
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
+import {Platform} from 'react-native';
 import {
   apiService,
   WeatherSearchResult,
@@ -111,14 +112,14 @@ export const setLocationAsync = createAsyncThunk<
     // To replace the simulator locations with a hard coded location:
     // 1. Command + / to uncomment/comment (Mac)
     // 2. Shift + Command + / to block comment/uncomment (Mac)
-    // if (__DEV__ && Platform.OS === 'ios') {
-    //   return {
-    //     latitude,
-    //     longitude,
-    //     city: 'New York',
-    //     country: 'US',
-    //   };
-    // }
+    if (__DEV__ && Platform.OS === 'ios') {
+      return {
+        latitude,
+        longitude,
+        city: 'Copenhagen',
+        country: 'DK',
+      };
+    }
 
     return {
       latitude,
