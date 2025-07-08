@@ -192,11 +192,13 @@ The app **already includes full location services** with dynamic GPS-based weath
 ### Location Configuration
 
 **Default Behavior:**
+
 - App requests location permissions on first launch
 - Weather data is fetched for user's current GPS location
 - Location is labeled as "Current Location" in the UI
 
 **Development Mode:**
+
 - iOS Simulator uses Copenhagen coordinates (55.6761, 12.5683) as fallback
 - Real devices use actual GPS coordinates
 - Android emulator requires location simulation in AVD settings
@@ -219,6 +221,7 @@ export const getCurrentLocation = async (): Promise<LocationCoordinates> => {
 ```
 
 **Location Permissions:**
+
 - iOS: Location access requested automatically via `Geolocation.requestAuthorization()`
 - Android: Uses `PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION`
 - Both platforms show appropriate permission dialogs
@@ -233,12 +236,10 @@ HostAway requires specific environment variables to function properly. The app u
 
 #### Environment Files
 
-- `.env` - Base environment file for local development
-- `.env.development` - Used for development builds
-- `.env.production` - Used for production builds
-- `.env.test` - Used when running tests
+- `.env` - Environment file for local development
+- `.env.example` - Template file with example values
 
-All environment files should contain the same variables with appropriate values for each environment.
+Copy `.env.example` to `.env` and fill in your actual values for local development.
 
 #### Required Environment Variables
 
@@ -265,12 +266,10 @@ All environment files should contain the same variables with appropriate values 
 3. For different build environments, create copies with appropriate configurations:
 
    ```bash
-   cp .env .env.development
-   cp .env .env.production
-   cp .env .env.test
+   cp .env.example .env
    ```
 
-4. Modify each file as needed for its specific environment.
+4. Fill in your actual API keys and secrets in the `.env` file.
 
 ### Getting an OpenWeather API Key
 
