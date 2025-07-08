@@ -11,15 +11,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "postinstall": "patch-package",
-    "clean:node-modules": "bash scripts/clean-node-modules.sh",
-    "seed:superadmin": "npx ts-node --project tsconfig-node.json src/scripts/seedSuperAdmin.ts",
-    "script:weather-history": "npx ts-node --project scripts/tsconfig.json scripts/test-weather-history-integration.ts",
-    "script:api-discovery": "npx ts-node --project scripts/tsconfig.json scripts/test-api-discovery.ts",
-    "script:login-test": "npx ts-node --project scripts/tsconfig.json scripts/test-login-credentials.ts",
-    "script:params-test": "npx ts-node --project scripts/tsconfig.json scripts/test-correct-params.ts",
-    "script:api-test": "npx ts-node --project scripts/tsconfig.json scripts/test-api.ts",
-    "scripts:list": "npx ts-node --project scripts/tsconfig.json scripts/list-scripts.ts"
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.1.2",
