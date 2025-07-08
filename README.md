@@ -178,6 +178,53 @@ When you want to forcefully reload, for example to reset the state of your app, 
 - **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
 - **iOS**: Press <kbd>R</kbd> in iOS Simulator.
 
+## Location Services
+
+### Current Implementation
+
+The app **already includes full location services** with dynamic GPS-based weather fetching:
+
+- **Dynamic Location**: Uses `react-native-geolocation-service` to get user's current coordinates
+- **Permission Handling**: Automatic permission requests for iOS and Android
+- **Fallback Location**: Copenhagen, Denmark for iOS simulator during development
+- **Weather Integration**: Weather data fetched based on user's actual GPS location
+
+### Location Configuration
+
+**Default Behavior:**
+- App requests location permissions on first launch
+- Weather data is fetched for user's current GPS location
+- Location is labeled as "Current Location" in the UI
+
+**Development Mode:**
+- iOS Simulator uses Copenhagen coordinates (55.6761, 12.5683) as fallback
+- Real devices use actual GPS coordinates
+- Android emulator requires location simulation in AVD settings
+
+**To Use Manual Location Instead:**
+
+If you want to switch to hardcoded location for testing:
+
+1. Open `src/services/locationService.ts`
+2. Modify the `getCurrentLocation` function to always return hardcoded coordinates:
+
+```typescript
+export const getCurrentLocation = async (): Promise<LocationCoordinates> => {
+  // Always use hardcoded location (Stockholm example)
+  return Promise.resolve({
+    latitude: 59.3293,
+    longitude: 18.0686,
+  });
+};
+```
+
+**Location Permissions:**
+- iOS: Location access requested automatically via `Geolocation.requestAuthorization()`
+- Android: Uses `PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION`
+- Both platforms show appropriate permission dialogs
+
+For comprehensive enhancement plans, see [WEATHER_APP_ENHANCEMENTS.md](./WEATHER_APP_ENHANCEMENTS.md).
+
 ## Environment Setup
 
 ### Environment Variables
