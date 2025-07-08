@@ -13,6 +13,7 @@ const config = {
     // Don't bundle dotenv and other Node.js specific modules
     resolverMainFields: ['react-native', 'browser', 'main'],
   },
+  resetCache: true
 };
 
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppDispatch, RootState} from '../../store';
-import {logoutUser} from '../../store/slices/authSlice';
+import {logoutUser, deleteProfile} from '../../store/slices/authSlice';
 import {useThemedStyles, useTheme} from '../../styles/ThemeProvider';
 import {Theme} from '../../styles/theme';
 import Card from '../../components/common/Card';
@@ -22,7 +22,7 @@ const ProfileScreen: React.FC = () => {
   const styles = useThemedStyles(createStyles);
   const {theme, toggleTheme, themeType} = useTheme();
   const dispatch = useDispatch<AppDispatch>();
-  const {user, isLoading} = useSelector((state: RootState) => state.auth);
+  const {user, isLoading, error} = useSelector((state: RootState) => state.auth);
 
   const [preferences, setPreferences] = useState({
     temperatureUnit: 'celsius',
@@ -56,7 +56,7 @@ const ProfileScreen: React.FC = () => {
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
-      'This action cannot be undone. Are you sure?',
+      'This action cannot be undone. Are you sure you want to permanently delete your account?',
       [
         {
           text: 'Cancel',
@@ -65,11 +65,13 @@ const ProfileScreen: React.FC = () => {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Delete Account',
-              'Account deletion functionality coming soon!',
-            );
+          onPress: async () => {
+            try {
+              await dispatch(deleteProfile()).unwrap();
+              Alert.alert('Success', 'Your account has been deleted successfully.');
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to delete account. Please try again.');
+            }
           },
         },
       ],

@@ -1,4 +1,5 @@
 import {createSlice, createAsyncThunk, PayloadAction} from '@reduxjs/toolkit';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   AuthState,
   AuthCredentials,
@@ -17,8 +18,8 @@ const transformApiUserToAppUser = (apiUser: any): User => ({
   email: apiUser.email,
   isVerified: true, // API users are considered verified
   isAdmin: false, // Default to false unless specified
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  createdAt: new Date().toISOString(), // Use ISO string instead of Date object
+  updatedAt: new Date().toISOString(), // Use ISO string instead of Date object
   preferences: apiUser.preferences
     ? {
         temperatureUnit: apiUser.preferences.temperatureUnit,
@@ -57,18 +58,31 @@ const initialState: AuthState = {
 
 // Async thunks
 export const registerUser = createAsyncThunk<
-  {success: boolean; message: string; email: string},
+  AuthResponse,
   RegisterData,
   {rejectValue: AuthError}
 >('auth/register', async (data, {rejectWithValue}) => {
   try {
     await apiService.initialize();
     const apiData = transformRegisterDataToApi(data);
-    await apiService.register(apiData);
-    return {
-      success: true,
-      message: 'Registration successful',
+    const registerResponse = await apiService.register(apiData);
+    
+    // Immediately verify the user automatically
+    await apiService.verifyEmail({
       email: data.email,
+      token: registerResponse.verificationCode,
+    });
+    
+    // Now login to get the auth tokens
+    const loginResponse = await apiService.login({
+      email: data.email,
+      password: data.password,
+    });
+    
+    return {
+      user: transformApiUserToAppUser(loginResponse.user),
+      token: loginResponse.token,
+      refreshToken: loginResponse.refreshToken || '',
     };
   } catch (error: any) {
     return rejectWithValue({
@@ -79,25 +93,19 @@ export const registerUser = createAsyncThunk<
 });
 
 export const verifyEmail = createAsyncThunk<
-  AuthResponse,
+  {success: boolean; message: string},
   VerificationRequest,
   {rejectValue: AuthError}
 >('auth/verifyEmail', async (request, {rejectWithValue}) => {
   try {
-    // For the Hostaway API, email verification is not required
-    // Return a mock success response
+    await apiService.initialize();
+    const response = await apiService.verifyEmail({
+      email: request.email,
+      token: request.code,
+    });
     return {
-      user: {
-        id: 'temp-id',
-        name: 'User',
-        email: request.email,
-        isVerified: true,
-        isAdmin: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      token: 'temp-token',
-      refreshToken: 'temp-refresh-token',
+      success: true,
+      message: response.message || 'Email verified successfully',
     };
   } catch (error: any) {
     return rejectWithValue({
@@ -127,6 +135,48 @@ export const loginUser = createAsyncThunk<
     return rejectWithValue({
       message: error.message || 'Login failed',
       code: error.statusCode || 'LOGIN_ERROR',
+    });
+  }
+});
+
+// Restore session from storage
+export const restoreSession = createAsyncThunk<
+  {user: User; token: string; refreshToken?: string} | null,
+  void,
+  {rejectValue: AuthError}
+>('auth/restoreSession', async (_, {rejectWithValue}) => {
+  try {
+    await apiService.initialize();
+    const isAuth = await apiService.isAuthenticated();
+
+    if (!isAuth) {
+      return null;
+    }
+
+    const storedUser = await apiService.getStoredUser();
+    const token = apiService.getToken();
+    
+    if (storedUser && token) {
+      // Try to get refresh token from storage
+      let refreshToken = '';
+      try {
+        refreshToken = await AsyncStorage.getItem('hostaway_refresh_token') || '';
+      } catch (error) {
+        console.warn('Failed to load refresh token:', error);
+      }
+      
+      return {
+        user: transformApiUserToAppUser(storedUser),
+        token,
+        refreshToken,
+      };
+    }
+
+    return null;
+  } catch (error: any) {
+    return rejectWithValue({
+      message: error.message || 'Failed to restore session',
+      code: error.statusCode || 'RESTORE_SESSION_ERROR',
     });
   }
 });
@@ -171,6 +221,23 @@ export const logoutUser = createAsyncThunk<
     return rejectWithValue({
       message: error.message || 'Logout failed',
       code: error.statusCode || 'LOGOUT_ERROR',
+    });
+  }
+});
+
+export const deleteProfile = createAsyncThunk<
+  void,
+  void,
+  {rejectValue: AuthError}
+>('auth/deleteProfile', async (_, {rejectWithValue}) => {
+  try {
+    await apiService.deleteUserProfile();
+    // After successful deletion, clear local storage
+    await apiService.logout();
+  } catch (error: any) {
+    return rejectWithValue({
+      message: error.message || 'Failed to delete profile',
+      code: error.statusCode || 'DELETE_PROFILE_ERROR',
     });
   }
 });
@@ -271,8 +338,13 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.pendingVerification = action.payload.email;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.refreshToken = action.payload.refreshToken || null;
+        state.isAuthenticated = true;
+        state.pendingVerification = null;
         state.error = null;
+        apiService.setToken(action.payload.token);
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -290,13 +362,10 @@ const authSlice = createSlice({
       })
       .addCase(verifyEmail.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.refreshToken = action.payload.refreshToken;
-        state.isAuthenticated = true;
         state.pendingVerification = null;
         state.error = null;
-        apiService.setToken(action.payload.token);
+        // Email verification only confirms the email is verified
+        // User still needs to login to get authenticated
       })
       .addCase(verifyEmail.rejected, (state, action) => {
         state.isLoading = false;
@@ -316,7 +385,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
-        state.refreshToken = action.payload.refreshToken;
+        state.refreshToken = action.payload.refreshToken || null;
         state.isAuthenticated = true;
         state.error = null;
         apiService.setToken(action.payload.token);
@@ -327,6 +396,36 @@ const authSlice = createSlice({
           message: action.payload?.message || 'Login failed',
           code: action.payload?.code || 'LOGIN_ERROR',
         };
+      });
+
+    // Restore session
+    builder
+      .addCase(restoreSession.pending, state => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(restoreSession.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (action.payload) {
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+          state.refreshToken = action.payload.refreshToken || null;
+          state.isAuthenticated = true;
+          apiService.setToken(action.payload.token);
+        } else {
+          state.isAuthenticated = false;
+        }
+        state.error = null;
+      })
+      .addCase(restoreSession.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.token = null;
+        state.refreshToken = null;
+        // Don't set error for restore session failure - it's normal when no session exists
+        state.error = null;
+        apiService.clearToken();
       });
 
     // Load current user
@@ -380,6 +479,29 @@ const authSlice = createSlice({
           code: action.payload?.code || 'LOGOUT_ERROR',
         };
         apiService.clearToken();
+      });
+
+    // Delete profile
+    builder
+      .addCase(deleteProfile.pending, state => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteProfile.fulfilled, state => {
+        state.isLoading = false;
+        state.user = null;
+        state.token = null;
+        state.refreshToken = null;
+        state.isAuthenticated = false;
+        state.error = null;
+        apiService.clearToken();
+      })
+      .addCase(deleteProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = {
+          message: action.payload?.message || 'Failed to delete profile',
+          code: action.payload?.code || 'DELETE_PROFILE_ERROR',
+        };
       });
 
     // Update profile

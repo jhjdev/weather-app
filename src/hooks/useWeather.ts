@@ -26,6 +26,9 @@ export const useWeather = (): UseWeatherReturn => {
   const {isLoading, error, currentLocation} = useSelector(
     (state: RootState) => state.weather,
   );
+  const {isAuthenticated} = useSelector(
+    (state: RootState) => state.auth,
+  );
 
   // Local loading state for location fetching
   const [locationLoading, setLocationLoading] = useState<boolean>(false);
@@ -38,6 +41,12 @@ export const useWeather = (): UseWeatherReturn => {
    * Fetch location and weather data in one go
    */
   const fetchWeatherData = useCallback(async (): Promise<void> => {
+    // Skip if not authenticated
+    if (!isAuthenticated) {
+      console.log('Skipping weather fetch - user not authenticated');
+      return;
+    }
+
     // Skip if already loading
     if (
       locationLoading ||
@@ -96,20 +105,32 @@ export const useWeather = (): UseWeatherReturn => {
     isLoading.location,
     isLoading.currentWeather,
     isLoading.forecast,
+    isAuthenticated,
   ]);
 
   // Refresh weather data (for manual refresh)
   const refreshWeather = useCallback(async (): Promise<void> => {
+    if (!isAuthenticated) {
+      console.log('Cannot refresh weather - user not authenticated');
+      return;
+    }
     await fetchWeatherData();
-  }, [fetchWeatherData]);
+  }, [fetchWeatherData, isAuthenticated]);
 
-  // Initialize weather data on mount
+  // Initialize weather data on mount, but only when authenticated
   useEffect(() => {
-    if (!initialFetchDone.current) {
+    if (!initialFetchDone.current && isAuthenticated) {
       initialFetchDone.current = true;
       fetchWeatherData();
     }
-  }, [fetchWeatherData]);
+  }, [fetchWeatherData, isAuthenticated]);
+
+  // Reset fetch flag when authentication status changes
+  useEffect(() => {
+    if (!isAuthenticated) {
+      initialFetchDone.current = false;
+    }
+  }, [isAuthenticated]);
 
   // Combine loading states
   const loading =

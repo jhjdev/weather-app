@@ -54,28 +54,32 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
 }) => {
   const styles = useThemedStyles(createStyles);
   const {theme} = useTheme();
+  
+  // Animated index for smooth transitions
   const animatedIndex = useSharedValue(state.index);
-
+  
+  // Update animated value when index changes
   React.useEffect(() => {
     animatedIndex.value = withSpring(state.index, {
       damping: 15,
       stiffness: 150,
     });
-  }, [state.index, animatedIndex]);
-
+  }, [state.index]);
+  
+  // Animated indicator style
   const animatedIndicatorStyle = useAnimatedStyle(() => {
     const tabWidth = screenWidth / state.routes.length;
     const translateX = interpolate(
       animatedIndex.value,
-      state.routes.map((_, i) => i),
-      state.routes.map((_, i) => i * tabWidth + tabWidth / 2 - 20),
+      [0, state.routes.length - 1],
+      [tabWidth / 2 - 20, (state.routes.length - 1) * tabWidth + tabWidth / 2 - 20],
       Extrapolation.CLAMP,
     );
-
+    
     return {
       transform: [{translateX}],
     };
-  });
+  }, [state.routes.length]);
 
   return (
     <View style={styles.container}>
@@ -85,7 +89,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
         start={{x: 0, y: 0}}
         end={{x: 1, y: 0}}>
         <View style={styles.tabBar}>
-          {/* Animated indicator */}
+          {/* Animated Indicator */}
           <Animated.View style={[styles.indicator, animatedIndicatorStyle]} />
 
           {/* Tab buttons */}
@@ -124,7 +128,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
                 onLongPress={onLongPress}
                 style={styles.tabButton}
                 activeOpacity={0.7}>
-                <Animated.View style={[styles.iconContainer, buttonStyle]}>
+                <View style={[styles.iconContainer, buttonStyle]}>
                   <TabIcon
                     name={route.name}
                     _focused={isFocused}
@@ -135,7 +139,7 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({
                     }
                     size={24}
                   />
-                </Animated.View>
+                </View>
               </TouchableOpacity>
             );
           })}

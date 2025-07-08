@@ -15,11 +15,11 @@ export interface LocationError {
   message: string;
 }
 
-// Default location for simulator (New York City)
+// Default location for simulator (Copenhagen, Denmark)
 /* eslint-disable @typescript-eslint/no-unused-vars */
 const DEFAULT_LOCATION: LocationCoordinates = {
-  latitude: 40.7128,
-  longitude: -74.006,
+  latitude: 55.6761,
+  longitude: 12.5683,
 };
 
 // Location options
@@ -77,10 +77,10 @@ export const getCurrentLocation = async (): Promise<LocationCoordinates> => {
   // To replace the simulator locations with a hard coded location:
   // Use Command + / to uncomment/comment a single line (Mac)
   // Use Shift + Command + / to comment/uncomment a block (Mac)
-  // if (__DEV__ && Platform.OS === 'ios') {
-  //   console.log('Using default location for simulator');
-  //   return Promise.resolve(DEFAULT_LOCATION);
-  // }
+  if (__DEV__ && Platform.OS === 'ios') {
+    console.log('Using default location for simulator');
+    return Promise.resolve(DEFAULT_LOCATION);
+  }
 
   const hasPermission = await requestLocationPermission();
 

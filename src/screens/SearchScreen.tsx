@@ -26,7 +26,7 @@ import {
   setSearchLoading,
   setSearchError,
 } from '../store/slices/searchSlice';
-import {apiService} from '../services/apiService';
+import {apiService, WeatherData} from '../services/apiService';
 
 // Define LocationItem component outside of SearchScreen
 interface LocationItemProps {
@@ -48,7 +48,7 @@ interface SavedSearchesModalProps {
   visible: boolean;
   searchHistory: SearchHistoryItem[];
   onClose: () => void;
-  onSelectLocation: (item: SearchHistoryItem) => void;
+  onSelectLocation: (item: SearchResult | SearchHistoryItem) => void;
 }
 
 const SavedSearchesModal: React.FC<SavedSearchesModalProps> = ({
@@ -87,7 +87,7 @@ const SavedSearchesModal: React.FC<SavedSearchesModalProps> = ({
 
 interface RecentSearchesProps {
   searchHistory: SearchHistoryItem[];
-  onSelectLocation: (item: SearchHistoryItem) => void;
+  onSelectLocation: (item: SearchResult | SearchHistoryItem) => void;
 }
 
 const RecentSearches: React.FC<RecentSearchesProps> = ({
@@ -108,7 +108,7 @@ const RecentSearches: React.FC<RecentSearchesProps> = ({
 
 interface SearchResultItemProps {
   item: SearchResult;
-  onPress: (item: SearchResult) => void;
+  onPress: (item: SearchResult | SearchHistoryItem) => void;
 }
 
 const SearchResultItem: React.FC<SearchResultItemProps> = ({item, onPress}) => (
@@ -141,18 +141,19 @@ const SearchScreen: React.FC = () => {
     error: searchApiError,
     currentSearchTerm,
   } = useSelector((state: RootState) => state.search);
+  const {isAuthenticated} = useSelector((state: RootState) => state.auth);
   const [selectedLocation, setSelectedLocation] =
     useState<SearchHistoryItem | null>(null);
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
   const [selectedLocationWeather, setSelectedLocationWeather] =
-    useState<any>(null);
+    useState<WeatherData | null>(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState<boolean>(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
 
   // Use the new API for weather search
   useEffect(() => {
     const fetchLocations = async () => {
-      if (currentSearchTerm.length > 2) {
+      if (currentSearchTerm.length > 2 && isAuthenticated) {
         dispatch(setSearchLoading(true));
         try {
           console.log('Searching weather for location:', currentSearchTerm);
@@ -178,8 +179,12 @@ const SearchScreen: React.FC = () => {
         } finally {
           dispatch(setSearchLoading(false));
         }
+      } else if (!isAuthenticated && currentSearchTerm.length > 2) {
+        // Show message when user tries to search without being authenticated
+        dispatch(setSearchError('Please log in to search for weather data'));
       } else {
         dispatch(clearSearchResults());
+        dispatch(setSearchError(null));
       }
     };
 
@@ -189,7 +194,7 @@ const SearchScreen: React.FC = () => {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [currentSearchTerm, dispatch]);
+  }, [currentSearchTerm, dispatch, isAuthenticated]);
 
   const handleSearch = (text: string) => {
     dispatch(setSearchTerm(text));
@@ -197,6 +202,12 @@ const SearchScreen: React.FC = () => {
 
   // Fetch weather data for a selected location
   const fetchWeatherForLocation = useCallback(async (city: string) => {
+    if (!isAuthenticated) {
+      console.log('Cannot fetch weather - user not authenticated');
+      setWeatherError('Please log in to view weather data');
+      return;
+    }
+
     setIsLoadingWeather(true);
     setWeatherError(null);
 
@@ -209,11 +220,11 @@ const SearchScreen: React.FC = () => {
     } finally {
       setIsLoadingWeather(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
-  // Handle selecting a location from search results
+  // Handle selecting a location from search results or history
   const handleSelectLocation = useCallback(
-    (location: SearchResult) => {
+    (location: SearchResult | SearchHistoryItem) => {
       console.log('Selected location details:', {
         name: location.name,
         country: location.country,
@@ -228,13 +239,22 @@ const SearchScreen: React.FC = () => {
         return;
       }
 
-      // Add to search history with timestamp
-      const historyItem: SearchHistoryItem = {
-        ...location,
-        timestamp: Math.floor(Date.now() / 1000),
-      };
+      // Create or reuse history item
+      let historyItem: SearchHistoryItem;
+      if ('timestamp' in location) {
+        // It's already a SearchHistoryItem
+        historyItem = location;
+      } else {
+        // It's a SearchResult, convert to SearchHistoryItem
+        historyItem = {
+          ...location,
+          timestamp: Math.floor(Date.now() / 1000),
+        };
+        // Only add to history if it's a new search result
+        dispatch(addToSearchHistory(historyItem));
+      }
 
-      console.log('Creating history item with data:', {
+      console.log('Using history item with data:', {
         name: historyItem.name,
         country: historyItem.country,
         id: historyItem.id,
@@ -242,7 +262,6 @@ const SearchScreen: React.FC = () => {
       });
 
       setSelectedLocation(historyItem);
-      dispatch(addToSearchHistory(historyItem));
       dispatch(setSearchTerm(''));
       dispatch(clearSearchResults());
       Keyboard.dismiss();
@@ -256,6 +275,7 @@ const SearchScreen: React.FC = () => {
   const handleClearSearch = () => {
     dispatch(setSearchTerm(''));
     dispatch(clearSearchResults());
+    dispatch(setSearchError(null));
   };
 
   return (
@@ -346,11 +366,11 @@ const SearchScreen: React.FC = () => {
                 <View style={styles.weatherContainer}>
                   <View style={styles.weatherMainInfo}>
                     <Text style={styles.temperature}>
-                      {Math.round(selectedLocationWeather.current.temperature)}
+                      {selectedLocationWeather.temperature ? Math.round(selectedLocationWeather.temperature) : 'N/A'}
                       °C
                     </Text>
                     <Text style={styles.weatherCondition}>
-                      {selectedLocationWeather.current.condition.main}
+                      {selectedLocationWeather.description || 'N/A'}
                     </Text>
                   </View>
 
@@ -359,7 +379,7 @@ const SearchScreen: React.FC = () => {
                       <Icon.Droplet stroke="#1565C0" width={20} height={20} />
                       <Text style={styles.weatherDetailLabel}>Humidity</Text>
                       <Text style={styles.weatherDetailValue}>
-                        {selectedLocationWeather.current.humidity}%
+                        {selectedLocationWeather.humidity || 'N/A'}%
                       </Text>
                     </View>
 
@@ -367,7 +387,7 @@ const SearchScreen: React.FC = () => {
                       <Icon.Wind stroke="#1565C0" width={20} height={20} />
                       <Text style={styles.weatherDetailLabel}>Wind</Text>
                       <Text style={styles.weatherDetailValue}>
-                        {selectedLocationWeather.current.windSpeed} m/s
+                        {selectedLocationWeather.windSpeed || 'N/A'} m/s
                       </Text>
                     </View>
 
@@ -377,10 +397,9 @@ const SearchScreen: React.FC = () => {
                         width={20}
                         height={20}
                       />
-                      <Text style={styles.weatherDetailLabel}>Feels Like</Text>
+                      <Text style={styles.weatherDetailLabel}>Location</Text>
                       <Text style={styles.weatherDetailValue}>
-                        {Math.round(selectedLocationWeather.current.feelsLike)}
-                        °C
+                        {selectedLocationWeather.location || 'N/A'}
                       </Text>
                     </View>
                   </View>

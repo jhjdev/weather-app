@@ -4,7 +4,7 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createStackNavigator} from '@react-navigation/stack';
 import {useDispatch, useSelector} from 'react-redux';
 import {AppDispatch, RootState} from '../store';
-import {loadCurrentUser} from '../store/slices/authSlice';
+import {restoreSession} from '../store/slices/authSlice';
 
 // Screen imports
 import HomeScreen from '../screens/HomeScreen';
@@ -105,9 +105,9 @@ const AppNavigator: React.FC = () => {
     (state: RootState) => state.auth,
   );
 
-  // Load stored user on app start
+  // Restore session on app start
   useEffect(() => {
-    dispatch(loadCurrentUser());
+    dispatch(restoreSession());
   }, [dispatch]);
 
   // Show loading while checking authentication
